@@ -9,22 +9,26 @@ maxalt = naca_table_maxalt();
 sealvl = naca_table_sealvl();
 
 % vector of alpha values from Xfoil data
-alpha_max = maxalt(:,1);
+
+% note: only rows 18-54 are taken because this is the gaurenteed linear
+% regime.
+
+alpha_max = maxalt(18:54,1);
 % vector of corresponding Cl values from Xfoil data
-Cl_max = maxalt(:,2);
+Cl_max = maxalt(18:54,2);
 
 % vector of alpha values from Xfoil data
-alpha_sea = sealvl(:,1);
+alpha_sea = sealvl(18:54,1);
 % vector of corresponding Cl values from Xfoil data
-Cl_sea = sealvl(:,2);
+Cl_sea = sealvl(18:54,2);
 
 %getting 2d liftcurve slope from data
 temp = polyfit(alpha_max,Cl_max,1);
-Cl_alpha_max = temp(1);
+Cl_alpha_max = (180/pi)*temp(1);
 Cl_0_max = temp(2);
 
 temp = polyfit(alpha_sea,Cl_sea,1);
-Cl_alpha_sea = temp(1);
+Cl_alpha_sea = (180/pi)*temp(1);
 Cl_0_sea = temp(2);
 
 
@@ -35,6 +39,11 @@ e = 0.79;
 
 CL_alpha_max = Cl_alpha_max/(1+(Cl_alpha_max/(pi*e*A)));
 CL_alpha_sea = Cl_alpha_sea/(1+(Cl_alpha_sea/(pi*e*A)));
+
+alpha_max = (pi/180)*maxalt(:,1);
+alpha_sea = (pi/180)*sealvl(:,1);
+CL_max = CL_alpha_max.*alpha_max + Cl_0_max;
+CL_sea = CL_alpha_sea.*alpha_sea + Cl_0_sea;
 
 disp('altitude    CL_alpha    CL_0    ');
 fprintf('\n12000ft     %8.4f',CL_alpha_max);
