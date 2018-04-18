@@ -12,22 +12,26 @@ Nx=TopNodes(:,1);
 Nytop=TopNodes(:,2);
 Nybot=BottomNodes(:,2);
 % Scale points to desire size
-scalefactor=1.346;
-nx=scalefactor*Nx;
-nytop=scalefactor*Nytop;
-nybot=scalefactor*Nybot;
+xscalefactor=1.346;
+topscalefactor=1.325;
+botscalefactor=1.38;
+nx=xscalefactor*Nx;
+nytop=topscalefactor*Nytop;
+nybot=botscalefactor*Nybot;
 
 %% Create Elements
 % All Nodes for airfoil are in the inner side of the elements
 skint=0.003;  % Skin thickness
 
 % Create Airfoil Elements
-Topel=struct('posX',nx,'posY',nytop,'Area',zeros(length(nx),1),...
+Topel=struct('posX',nx,'posY',nytop,...
+             'Length',zeros(length(nx),1),'Area',zeros(length(nx),1),...
              'cx',zeros(length(nx),1),'cy',zeros(length(nx),1),...
              'Ixx',zeros(length(nx),1),'Iyy',zeros(length(nx),1),...
              'Ixy',zeros(length(nx),1),...
              'xcoord',zeros(length(nx),5),'ycoord',zeros(length(nx),5));
-Botel=struct('posX',nx,'posY',nybot,'Area',zeros(length(nx),1),...
+Botel=struct('posX',nx,'posY',nybot,...
+             'Length',zeros(length(nx),1),'Area',zeros(length(nx),1),...
              'cx',zeros(length(nx),1),'cy',zeros(length(nx),1),...
              'Ixx',zeros(length(nx),1),'Iyy',zeros(length(nx),1),...
              'Ixy',zeros(length(nx),1),...
@@ -45,8 +49,9 @@ for i=1:length(nx)-1
    Topel.ycoord(i,:)=[Topel.posY(i) Topel.posY(i)+skint ...
            Topel.posY(i+1)+skint Topel.posY(i+1) Topel.posY(i)];
    % Calculate Area
-   Topel.Area(i)=skint*sqrt((Topel.posX(i+1)-Topel.posX(i))^2+...
+   Topel.Length(i)=sqrt((Topel.posX(i+1)-Topel.posX(i))^2+...
                  (Topel.posY(i+1)-Topel.posY(i))^2);
+   Topel.Area(i)=skint*Topel.Length(i);
    % Calculate Element Centroid
    Topel.cx(i)=0.5*((Topel.xcoord(i,1)+Topel.xcoord(i,2))/2+...
                     (Topel.xcoord(i,3)+Topel.xcoord(i,4))/2);
@@ -62,8 +67,9 @@ for i=1:length(nx)-1
    Botel.ycoord(i,:)=[Botel.posY(i)-skint Botel.posY(i) ...
            Botel.posY(i+1) Botel.posY(i+1)-skint Botel.posY(i)-skint];
    % Calculate Area
-   Botel.Area(i)=skint*sqrt((Botel.posX(i+1)-Botel.posX(i))^2+...
+   Botel.Length(i)=sqrt((Botel.posX(i+1)-Botel.posX(i))^2+...
                  (Botel.posY(i+1)-Botel.posY(i))^2);
+   Botel.Area(i)=skint*Botel.Length(i);
    % Calculate Element Centroid
    Botel.cx(i)=0.5*((Botel.xcoord(i,1)+Botel.xcoord(i,2))/2+...
                     (Botel.xcoord(i,3)+Botel.xcoord(i,4))/2);
@@ -87,6 +93,7 @@ sparcapt=0.002; % Spar cap size
 SparIndex=[8 13];
 Spars=struct('posX',zeros(length(SparIndex),1),...
              'posY',zeros(length(SparIndex),1),...
+             'Length',zeros(length(SparIndex),1),...
              'Area',zeros(length(SparIndex),1),...
              'cx',zeros(length(SparIndex),1), ...
              'cy',zeros(length(SparIndex),1),...
@@ -106,7 +113,8 @@ for i=1:length(SparIndex)
    Spars.ycoord(i,:)=[nybot(ind) nytop(ind) ...
                       nytop(ind) nybot(ind) nybot(ind)];
    % Calculate Area
-   Spars.Area(i)=spart*(nytop(ind)-nybot(ind));
+   Spars.Length(i)=(nytop(ind)-nybot(ind));
+   Spars.Area(i)=spart*Spars.Length(i);
    % Calculate Element Centroid
    Spars.cx(i)=0.5*((Spars.xcoord(i,1)+Spars.xcoord(i,2))/2+...
                     (Spars.xcoord(i,3)+Spars.xcoord(i,4))/2);
@@ -130,13 +138,91 @@ Cy=(YiAiairf+YiAiSpar)/(AirfoilArea+SparArea);
 
 plot(Cx,Cy,'*')
 xlim([-0.05,1.4])
-ylim([-0.15,0.15])
+ylim([-0.5,0.5])
 xlabel('Length (m)')
 ylabel('Length (m)')
 grid on
 hold off
 
+disp('The centroid is at')
+disp([Cx,Cy])
 %% Calculate Inertia
+
+% For Airfoil Elements
+for i=1:length(nx)-1
+    %Top Element
+    betatop=atan2(Topel.posY(i+1)-Topel.posY(i),...
+                  Topel.posX(i+1)-Topel.posX(i));
+    Topel.Ixx(i)=Topel.Length(i)^3*skint*(sin(betatop))^2/12+...
+                 Topel.Area(i)*(Cy-Topel.cy(i))^2;
+    Topel.Iyy(i)=Topel.Length(i)^3*skint*(cos(betatop))^2/12+...
+                 Topel.Area(i)*(Cx-Topel.cx(i))^2;
+    Topel.Ixy(i)=Topel.Length(i)^3*skint*sin(2*betatop)/24+...
+                 Topel.Area(i)*(Cx-Topel.cx(i))*(Cy-Topel.cy(i));
+    % Bottom Element
+    betabot=atan2(Botel.posY(i+1)-Botel.posY(i),...
+                  Botel.posX(i+1)-Botel.posX(i));
+    Botel.Ixx(i)=Botel.Length(i)^3*skint*(sin(betabot))^2/12+...
+                 Botel.Area(i)*(Cy-Botel.cy(i))^2;
+    Botel.Iyy(i)=Botel.Length(i)^3*skint*(cos(betabot))^2/12+...
+                 Botel.Area(i)*(Cx-Botel.cx(i))^2;
+    Botel.Ixy(i)=Botel.Length(i)^3*skint*sin(2*betabot)/24+...
+                 Botel.Area(i)*(Cx-Botel.cx(i))*(Cy-Botel.cy(i));
+end
+
+% Spars Elements
+for i=1:length(SparIndex)
+    Spars.Ixx(i)=spart*Spars.Length(i)^3/12+...
+                 Spars.Area(i)*(Cy-Spars.cy(i))^2;
+    Spars.Iyy(i)=spart^3*Spars.Length(i)/12+...
+                 Spars.Area(i)*(Cx-Spars.cx(i))^2;
+    Spars.Ixy(i)=Spars.Area(i)*(Cx-Spars.cx(i))*(Cy-Spars.cy(i));
+end
+
+Ixx=sum(Topel.Ixx(:))+sum(Botel.Ixx(:))+sum(Spars.Ixx(:));
+Iyy=sum(Topel.Iyy(:))+sum(Botel.Iyy(:))+sum(Spars.Iyy(:));
+Ixy=sum(Topel.Ixy(:))+sum(Botel.Ixy(:))+sum(Spars.Ixy(:));
+
+format short e
+disp('The Area Moment of Inertia are')
+disp([Ixx Iyy Ixy])
+
+%% Stress Analysis
+% Constants
+W=3200;         % m^2
+E=20*10^6;      % Pa
+g=9.8;          % kg*m/s^2
+Wingspan=5.5;    % meters
+
+% Set up
+z=linspace(0,Wingspan,Wingspan*100+1);
+
+% Load Factor
+n=4.4;
+
+% Critical Loads
+% PHAA PLAA NHAA NLAA PosGust NegGust
+Load=struct('L',zeros(6,length(z)), 'D', zeros(6,length(z)), ...
+            'VL',zeros(6,length(z)), 'ML',zeros(6,length(z)), ...
+            'VD',zeros(6,length(z)), 'VD',zeros(6,length(z)),...
+            'MM',zeros(6,length(z)), 'SigmaZ',zeros(6,length(z)));
+
+
+% Shear/Moment from Lift
+
+
+
+% Shear/Moment from Drag
+
+% Moment
+CM=-0.007;
+
+
+% Calculat Bending Stess 
+
+% SigmaZ=(Mx*(Iyy*y-Ixy*x)+My*(Ixx*x-Ixy*y))/(Ixx*Iyy-Ixy^2);
+
+
 
 
 
