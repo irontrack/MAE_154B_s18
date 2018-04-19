@@ -192,33 +192,82 @@ disp([Ixx Iyy Ixy])
 W=3200;         % m^2
 E=20*10^6;      % Pa
 g=9.8;          % kg*m/s^2
-Wingspan=5.5;    % meters
+Wingspan=5.5;   % meters
 
 % Set up
 z=linspace(0,Wingspan,Wingspan*100+1);
-
-% Load Factor
-n=4.4;
-
+Load=struct('L',zeros(6,length(z)), 'TotL',zeros(6,length(z)),...
+            'D',zeros(6,length(z)), 'TotD',zeros(6,length(z)), ...
+            'VL',zeros(6,length(z)), 'ML',zeros(6,length(z)),...
+            'VD',zeros(6,length(z)), 'MD',zeros(6,length(z)),...
+            'MM',zeros(6,length(z)), 'SigmaZ',zeros(6,length(z)));
+        
 % Critical Loads
 % PHAA PLAA NHAA NLAA PosGust NegGust
-Load=struct('L',zeros(6,length(z)), 'D', zeros(6,length(z)), ...
-            'VL',zeros(6,length(z)), 'ML',zeros(6,length(z)), ...
-            'VD',zeros(6,length(z)), 'VD',zeros(6,length(z)),...
-            'MM',zeros(6,length(z)), 'SigmaZ',zeros(6,length(z)));
 
+% Speed
+v=zeros(1,6);
+% Load Factor
+n=zeros(1,6);
 
-% Shear/Moment from Lift
+% Calculate Lift Distribution
+Load.L(1,:)=1;
+LZ=zeros(1,length(z));
 
+% Calculate Drag Distribution 
+Load.D(1,:)=1;
+DZ=zeros(1,length(z));
 
+% Total Lift and Drag
+for ii=1:length(z)-1
+    Load.TotL(1,ii+1)=Load.TotL(1,ii)+...
+                   0.5*(Load.L(1,ii)+Load.L(1,ii+1))*(z(ii+1)-z(ii));
+    LZ(1,ii)=0.5*(Load.L(1,ii)+Load.L(1,ii+1))*(z(ii+1)-z(ii))*...
+             (z(ii)+(z(ii+1)-z(ii))/2);
+    Load.TotD(1,ii+1)=Load.TotD(1,ii)+...
+                   0.5*(Load.D(1,ii)+Load.D(1,ii+1))*(z(ii+1)-z(ii));
+    DZ(1,ii)=0.5*(Load.D(1,ii)+Load.D(1,ii+1))*(z(ii+1)-z(ii))*...
+             (z(ii)+(z(ii+1)-z(ii))/2);
+end
+Lz=sum(LZ(1,:));
+LZeq=Lz/Load.TotL(1,end);
+Dz=sum(DZ(1,:));
+DZeq=Dz/Load.TotD(1,end);
 
-% Shear/Moment from Drag
+% Calculate Shear and Moment
+Load.VL(1,1)= Load.TotL(1,end);
+Load.ML(1,1)= Load.TotL(1,end)*LZeq;
+Load.VD(1,1)= Load.TotD(1,end);
+Load.MD(1,1)= Load.TotD(1,end)*DZeq;
+ML=0;
+MD=0;
+
+for k=2:length(z)
+    % Shear/Moment from Lift
+    Load.VL(1,k)=Load.VL(1,1)-Load.TotL(1,k);
+    ML=ML+0.5*(Load.VL(1,k-1)+Load.VL(1,k))*(z(k)-z(k-1));
+    Load.ML(1,k)=Load.ML(1,1)-ML;
+    
+    % Shear/Moment from Drag
+    Load.VD(1,k)=Load.VD(1,1)-Load.TotD(1,k);
+    MD=MD+0.5*(Load.VD(1,k-1)+Load.VD(1,k))*(z(k)-z(k-1));
+    Load.MD(1,k)=Load.MD(1,1)-MD;
+end
 
 % Moment
 CM=-0.007;
 
-
-% Calculat Bending Stess 
+% Check
+figure()
+hold on
+plot(z,0,'k')
+plot(z,Load.L(1,:),'r')
+plot(z,Load.VL(1,:),'g')
+plot(z,Load.ML(1,:),'b')
+grid on
+xlabel('Length (m)')
+ylabel('Shear (N)')
+%% Calculat Bending Stress and Deflection
 
 % SigmaZ=(Mx*(Iyy*y-Ixy*x)+My*(Ixx*x-Ixy*y))/(Ixx*Iyy-Ixy^2);
 
