@@ -196,10 +196,10 @@ Wingspan=5.5;   % meters
 
 % Set up
 z=linspace(0,Wingspan,Wingspan*100+1);
-Load=struct('L',zeros(6,length(z)), 'TotL',zeros(6,length(z)),...
-            'D',zeros(6,length(z)), 'TotD',zeros(6,length(z)), ...
-            'VL',zeros(6,length(z)), 'ML',zeros(6,length(z)),...
-            'VD',zeros(6,length(z)), 'MD',zeros(6,length(z)),...
+Load=struct('Wy',zeros(6,length(z)), 'TotWy',zeros(6,length(z)),...
+            'Wx',zeros(6,length(z)), 'TotWx',zeros(6,length(z)), ...
+            'VWy',zeros(6,length(z)), 'MWy',zeros(6,length(z)),...
+            'VWx',zeros(6,length(z)), 'MWx',zeros(6,length(z)),...
             'MM',zeros(6,length(z)), 'SigmaZ',zeros(6,length(z)));
         
 % Critical Loads
@@ -211,47 +211,47 @@ v=zeros(1,6);
 n=zeros(1,6);
 
 % Calculate Lift Distribution
-Load.L(1,:)=1;
-LZ=zeros(1,length(z));
+Load.Wy(1,:)=1;
+WyZ=zeros(1,length(z));
 
 % Calculate Drag Distribution 
-Load.D(1,:)=1;
-DZ=zeros(1,length(z));
+Load.Wx(1,:)=1;
+WxZ=zeros(1,length(z));
 
 % Total Lift and Drag
 for ii=1:length(z)-1
-    Load.TotL(1,ii+1)=Load.TotL(1,ii)+...
-                   0.5*(Load.L(1,ii)+Load.L(1,ii+1))*(z(ii+1)-z(ii));
-    LZ(1,ii)=0.5*(Load.L(1,ii)+Load.L(1,ii+1))*(z(ii+1)-z(ii))*...
+    Load.TotWy(1,ii+1)=Load.TotWy(1,ii)+...
+                   0.5*(Load.Wy(1,ii)+Load.Wy(1,ii+1))*(z(ii+1)-z(ii));
+    WyZ(1,ii)=0.5*(Load.Wy(1,ii)+Load.Wy(1,ii+1))*(z(ii+1)-z(ii))*...
              (z(ii)+(z(ii+1)-z(ii))/2);
-    Load.TotD(1,ii+1)=Load.TotD(1,ii)+...
-                   0.5*(Load.D(1,ii)+Load.D(1,ii+1))*(z(ii+1)-z(ii));
-    DZ(1,ii)=0.5*(Load.D(1,ii)+Load.D(1,ii+1))*(z(ii+1)-z(ii))*...
+    Load.TotWx(1,ii+1)=Load.TotWx(1,ii)+...
+                   0.5*(Load.Wx(1,ii)+Load.Wx(1,ii+1))*(z(ii+1)-z(ii));
+    WxZ(1,ii)=0.5*(Load.Wx(1,ii)+Load.Wx(1,ii+1))*(z(ii+1)-z(ii))*...
              (z(ii)+(z(ii+1)-z(ii))/2);
 end
-Lz=sum(LZ(1,:));
-LZeq=Lz/Load.TotL(1,end);
-Dz=sum(DZ(1,:));
-DZeq=Dz/Load.TotD(1,end);
+Wyz=sum(WyZ(1,:));
+WyZeq=Wyz/Load.TotWy(1,end);
+Wxz=sum(WxZ(1,:));
+WxZeq=Wxz/Load.TotWx(1,end);
 
 % Calculate Shear and Moment
-Load.VL(1,1)= Load.TotL(1,end);
-Load.ML(1,1)= Load.TotL(1,end)*LZeq;
-Load.VD(1,1)= Load.TotD(1,end);
-Load.MD(1,1)= Load.TotD(1,end)*DZeq;
-ML=0;
-MD=0;
+Load.VWy(1,1)= Load.TotWy(1,end);
+Load.MWy(1,1)= Load.TotWy(1,end)*WyZeq;
+Load.VWx(1,1)= Load.TotWx(1,end);
+Load.MWx(1,1)= Load.TotWx(1,end)*WxZeq;
+MWy=0;
+MWx=0;
 
 for k=2:length(z)
     % Shear/Moment from Lift
-    Load.VL(1,k)=Load.VL(1,1)-Load.TotL(1,k);
-    ML=ML+0.5*(Load.VL(1,k-1)+Load.VL(1,k))*(z(k)-z(k-1));
-    Load.ML(1,k)=Load.ML(1,1)-ML;
+    Load.VWy(1,k)=Load.VWy(1,1)-Load.TotWy(1,k);
+    MWy=MWy+0.5*(Load.VWy(1,k-1)+Load.VWy(1,k))*(z(k)-z(k-1));
+    Load.MWy(1,k)=Load.MWy(1,1)-MWy;
     
     % Shear/Moment from Drag
-    Load.VD(1,k)=Load.VD(1,1)-Load.TotD(1,k);
-    MD=MD+0.5*(Load.VD(1,k-1)+Load.VD(1,k))*(z(k)-z(k-1));
-    Load.MD(1,k)=Load.MD(1,1)-MD;
+    Load.VWx(1,k)=Load.VWx(1,1)-Load.TotWx(1,k);
+    MWx=MWx+0.5*(Load.VWx(1,k-1)+Load.VWx(1,k))*(z(k)-z(k-1));
+    Load.MWx(1,k)=Load.MWx(1,1)-MWx;
 end
 
 % Moment
@@ -260,13 +260,14 @@ CM=-0.007;
 % Check
 figure()
 hold on
-plot(z,0,'k')
-plot(z,Load.L(1,:),'r')
-plot(z,Load.VL(1,:),'g')
-plot(z,Load.ML(1,:),'b')
-grid on
+plot(z,zeros(1,length(z)),'k', 'Linewidth',3)
+plot(z,Load.Wy(1,:),'r')
+hAx=plotyy(z,Load.VWy(1,:),z,Load.MWy(1,:));
+legend('Beam','Applied Force','Shear','Moment')
 xlabel('Length (m)')
-ylabel('Shear (N)')
+ylabel(hAx(1), 'Shear (N)')
+ylabel(hAx(2), 'Moment (N-m)')
+grid on
 %% Calculat Bending Stress and Deflection
 
 % SigmaZ=(Mx*(Iyy*y-Ixy*x)+My*(Ixx*x-Ixy*y))/(Ixx*Iyy-Ixy^2);
