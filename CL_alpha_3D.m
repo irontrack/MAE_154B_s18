@@ -45,9 +45,11 @@ alpha_sea = (pi/180)*sealvl(:,1);
 CL_max = CL_alpha_max.*alpha_max + Cl_0_max;
 CL_sea = CL_alpha_sea.*alpha_sea + Cl_0_sea;
 
-CL_pmax = CL_alpha_max*(16)*(pi/180) + Cl_0_max;
-CL_nmax = CL_alpha_max*(-14.5)*(pi/180) + Cl_0_max;
+CL_pmax_12k = CL_alpha_max*(16)*(pi/180) + Cl_0_max;
+CL_nmax_12k = CL_alpha_max*(-14.5)*(pi/180) + Cl_0_max;
 
+CL_pmax_sea = CL_alpha_sea*(16)*(pi/180) + Cl_0_sea;
+CL_nmax_sea = CL_alpha_sea*(-14.5)*(pi/180) + Cl_0_sea;
 % plot CL vs alpha at sea level
 plot(alpha_max,CL_max,'r')
 hold on
@@ -60,7 +62,8 @@ fprintf('\n12000ft     %8.4f',CL_alpha_max);
 fprintf('    %8.4f',Cl_0_max);
 fprintf('\nsea lvl     %8.4f',CL_alpha_sea);
 fprintf('    %8.4f\n',Cl_0_sea);
-fprintf('CL_pmax %8.4f\n',CL_pmax);
-fprintf('CL_nmax %8.4f\n',CL_nmax);
-
+fprintf('CL_pmax_12k %8.4f\n',CL_pmax_12k);
+fprintf('CL_nmax_12k %8.4f\n',CL_nmax_12k);
+fprintf('CL_pmax_sea %8.4f\n',CL_pmax_sea);
+fprintf('CL_nmax_sea %8.4f\n',CL_nmax_sea);
 
