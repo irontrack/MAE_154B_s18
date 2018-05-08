@@ -8,7 +8,7 @@
 
 %   NOTE ****ALPHA*** IS IN ****RADIANS ***
 
-%           ALPHA        CL       CD         CM
+%           ALPHA        CL       CD         CM     Velocity  n-load
 % PHAA SEA
 % PGAA SEA
 % PLAA SEA
@@ -82,7 +82,7 @@ function alpha = vn_find_alpha()
         for i = 1:12
             temp(i,4) = 0.056;
         end
-        alpha = temp;
+        alpha = [temp, vn_points];
         
 end
     
