@@ -4,14 +4,14 @@ clear all;
 clc;
 
 %% Define Airfoil
-x=linspace(0,1,100);
-c=1;
+x=linspace(0,1.346,100);
+c=1.346;
 t=.12;
 m=2/100;
 p=4/10;
 pc=p*c;
 yc=zeros(1,length(x));
-yt=5*t*(.2969*sqrt(x)-.126*x-.3516*x.^2+.2843*x.^3-0.1015*x.^4);
+yt=5*t*(.2969*sqrt(x/c)-.126*(x/c)-.3516*(x/c).^2+.2843*(x/c).^3-0.1015*(x/c).^4);
 
 for i=1:length(x)
     if (x(i)<pc)
@@ -23,7 +23,7 @@ end
 
 Nytop=yc+yt;
 Nybot=yc-yt;
-scalefactor=1.346;
+scalefactor=1;
 nx=scalefactor*x;
 nytop=scalefactor*Nytop;
 nybot=scalefactor*Nybot;
@@ -299,9 +299,9 @@ E=70*10^9;                      % Pa
 g=9.8;                          % kg*m/s^2
 rho_sea=1.225;                  % kg/m^3
 rho_12k=rho_sea*.693;           % kg/m^3
-Wingspan=5.6;                   % meters
+Wingspan=5.6;                 % meters
 WingArea=1.346*0.8*Wingspan;    % m^2 
-Weight=910;                     % kg (Max allowed)
+Weight=910*g;                   % N(Max allowed)
 
 % Set up
 z=linspace(0,Wingspan,Wingspan*100);
@@ -313,41 +313,39 @@ Load=struct('Wy',ones(12,length(z)), 'TotWy',zeros(12,length(z)),...
         
 % Critical Loads
 % PHAA PLAA NHAA NLAA PosGust NegGust (then repeat at 12k)
-Criticalpt={'PHAA','PLAA','NHAA','NLAA','PosGust','NegGust'};
+Criticalpt={'PHAA','PosGust','PLAA','NLAA','NegGust','NHAA'};
 Loadcases=vn_find_alpha();  
 
-% alpha=(Loadcases(:,1))';        % AoA in rad
-alpha=0;
+alpha=(Loadcases(:,1))';        % AoA in rad
 Lift_coef=(Loadcases(:,2))';    % Lift Coeff.
 Drag_coef=(Loadcases(:,3))';    % Drag Coeff.
 CM_coef=(Loadcases(:,4))';      % Moment Coeff.
-v=zeros(1,6);                   % Speed
-v(1) = 58.8;  %Speed (from VN diagram)
-n=zeros(1,6);                   % Load Factor
-n(1) = 4.4;   %loading factor
+vel=(Loadcases(:,5))';          % Speed [m/s]
+n=(Loadcases(:,6))';            % Load Factor
+
 
 for LC=1:6   % Going through all load cases
 
 % Calculate Lift Distribution
-L1 = n(LC)*Weight;   %Total lift on a wing
-L1_rec = L1/Wingspan.*Load.Wy(LC,:);  %Rectangular lift distribution
-L0_1 = 4*L1/(pi*Wingspan);   %Elliptical lift dist. at centerline (x=0).
-L1_ellp = L0_1.*sqrt(1-(z./Wingspan).^2); %Elliptical lift distribution
-LiftLoad=(L1_rec+L1_ellp)/2;    %Spanwise lift distribution (average of rec & ellp)
+L = n(LC)*Weight*.5;   %Total lift on a wing (for a half span)
+L_rec = L/Wingspan.*Load.Wy(LC,:);  %Rectangular lift distribution
+L0 = 4*L/(pi*Wingspan);   %Elliptical lift dist. at centerline (x=0).
+L_ellp = L0.*sqrt(1-(z./Wingspan).^2); %Elliptical lift distribution
+LiftLoad=(L_rec+L_ellp)/2;    %Spanwise lift distribution (average of rec & ellp)
 
 
 % Calculate Drag Distribution 
-D = 0.5*rho_sea*WingArea*v(LC)^2*Drag_coef(LC);
+D = 0.5*rho_sea*WingArea*vel(LC)^2*Drag_coef(LC);
 DragLoad = D/Wingspan.*Load.Wx(LC,:);      %Spanwise drag distribution
 End_ind=round(0.8*length(DragLoad));
 DragLoad(End_ind:end) = DragLoad(End_ind:end)*1.1; 
                                     %Add 10% step to 80% onward of span
                         
 % Calculating Wy Wx
-Load.Wy(LC,:)=LiftLoad*cos(alpha(1))+DragLoad*sin(alpha(1));
-Load.Wx(LC,:)=-LiftLoad*sin(alpha(1))+DragLoad*cos(alpha(1));
-WyZ=zeros(LC,length(z));
-WxZ=zeros(LC,length(z));
+Load.Wy(LC,:)=LiftLoad*cos(alpha(LC))+DragLoad*sin(alpha(LC));
+Load.Wx(LC,:)=-LiftLoad*sin(alpha(LC))+DragLoad*cos(alpha(LC));
+WyZ=zeros(1,length(z));
+WxZ=zeros(1,length(z));
 
 % Total Lift and Drag
 for ii=1:length(z)-1
@@ -366,10 +364,10 @@ Wxz=sum(WxZ(LC,:));
 WxZeq=Wxz/Load.TotWx(LC,end);
 
 % Calculate Shear and Moment
-Load.VWy(LC,1)= -Load.TotWy(1,end);
-Load.MWy(LC,1)= Load.TotWy(1,end)*WyZeq;
-Load.VWx(LC,1)= -Load.TotWx(1,end);
-Load.MWx(LC,1)= Load.TotWx(1,end)*WxZeq;
+Load.VWy(LC,1)= -Load.TotWy(LC,end);
+Load.MWy(LC,1)= Load.TotWy(LC,end)*WyZeq;
+Load.VWx(LC,1)= -Load.TotWx(LC,end);
+Load.MWx(LC,1)= Load.TotWx(LC,end)*WxZeq;
 MWy=0;
 MWx=0;
 
