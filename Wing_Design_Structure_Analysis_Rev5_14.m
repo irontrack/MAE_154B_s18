@@ -191,17 +191,10 @@ for i=1:6
         SparCaps.cy(i)=SparCaps.posY(i)-(1/SparCaps.Area(i))*...
                         (sparcapt/2*(b^2+b*sparcapt-sparcapt^2));
     end
-    % Moment of inertia
-    SparCaps.Ixx(i)=(sparcapt/3)*(b*sparcapt^2+b^3-sparcapt^3)-...
-                     SparCaps.Area(i)*(SparCaps.cy(i)-SparCaps.posY(i))^2;
-    SparCaps.Iyy(i)=(sparcapt/3)*(b*sparcapt^2+b^3-sparcapt^3)-...
-                     SparCaps.Area(i)*(SparCaps.cx(i)-SparCaps.posX(i))^2;
-    SparCaps.Ixy(i)=(sparcapt^2/4)*(2*b^2-sparcapt^2)-SparCaps.Area(i)*...
-                    (SparCaps.cy(i)-SparCaps.posY(i))*...
-                    (SparCaps.cx(i)-SparCaps.posX(i));
                 
     XiAisparcap=XiAisparcap+SparCaps.cx(i)*SparCaps.Area(i);
     YiAisparcap=YiAisparcap+SparCaps.cy(i)*SparCaps.Area(i);
+    
     % Draw Spar Caps
     if i==3||i==4
         SparCaps.xcoord(i,:)=[SparCaps.posX(i) SparCaps.posX(i)+b...
@@ -237,11 +230,48 @@ SparCapArea=sum(SparCaps.Area(:,1));
 Cxsparcap=XiAisparcap/SparCapArea;
 Cysparcap=YiAisparcap/SparCapArea;
 
-%% Stringers
+%% Create Stringers Element
+% Stringers are z shape, with top and bot of length of L, height of H
+% Thickness are 1 mm
+L=0.002;
+H=0.003;
+StringerArea=H+2*L; % Area m^2
+StringerGap=[1 SparIndex];
+numofStringer1=3;
+numofStringer2=3;
+Ind1=round((StringerGap(2)-StringerGap(1))/numofStringer1);
+Ind2=round((StringerGap(3)-StringerGap(2))/numofStringer2);
+StringerInd=[Ind1:Ind1:StringerGap(2) StringerGap(2)+...
+             Ind2:Ind2:StringerGap(3)];
+
+TopStringers=struct('posX',nx(StringerInd),'posY',nytop(StringerInd),...
+        'cx',nx(StringerInd),'cy',nytop(StringerInd)-H/2,...
+        'Ixx',zeros(length(StringerInd),1),...
+        'Iyy',zeros(length(StringerInd),1),...
+        'Ixy',zeros(length(StringerInd),1));
+             
+BotStringers=struct('posX',nx(StringerInd),'posY',nybot(StringerInd),...
+        'cx',nx(StringerInd),'cy',nybot(StringerInd)+H/2,...
+        'Ixx',zeros(length(StringerInd),1),'Iyy',zeros(length(StringerInd),1),...
+        'Ixy',zeros(length(StringerInd),1));
+
+XiAiStringer=0;    
+YiAiStringer=0;
+
+for i=1:length(StringerInd)
+    XiAiStringer=XiAiStringer+TopStringers.posX(i)*StringerArea+...
+                 BotStringers.posX(i)*StringerArea;
+    YiAiStringer=YiAiStringer+TopStringers.posY(i)*StringerArea+...
+                 BotStringers.posY(i)*StringerArea;       
+end
+
+StringerArea=numel(StringerInd)*2*StringerArea;
 
 %% Calculate Total Centroid
-Cx=(XiAiairf+XiAiSpar+XiAisparcap)/(AirfoilArea+SparArea+SparCapArea);
-Cy=(YiAiairf+YiAiSpar+YiAisparcap)/(AirfoilArea+SparArea+SparCapArea);
+Cx=(XiAiairf+XiAiSpar+XiAisparcap+XiAiStringer)/...
+   (AirfoilArea+SparArea+SparCapArea+StringerArea);
+Cy=(YiAiairf+YiAiSpar+YiAisparcap+YiAiStringer)/...
+   (AirfoilArea+SparArea+SparCapArea+StringerArea);
 
 plot(Cx,Cy,'r*')
 title('Centroids and Element Plot')
@@ -287,12 +317,39 @@ for i=1:length(SparIndex)
     Spars.Ixy(i)=Spars.Area(i)*(Cx-Spars.cx(i))*(Cy-Spars.cy(i));
 end
 
+% SparCaps Elements
+for i=1:6
+    SparCaps.Ixx(i)=(sparcapt/3)*(b*sparcapt^2+b^3-sparcapt^3)-...
+                     SparCaps.Area(i)*(Cy-SparCaps.posY(i))^2;
+    SparCaps.Iyy(i)=(sparcapt/3)*(b*sparcapt^2+b^3-sparcapt^3)-...
+                     SparCaps.Area(i)*(Cx-SparCaps.posX(i))^2;
+    SparCaps.Ixy(i)=(sparcapt^2/4)*(2*b^2-sparcapt^2)-SparCaps.Area(i)*...
+                    (Cy-SparCaps.posY(i))*...
+                    (Cx-SparCaps.posX(i));
+end
+
+% Stringers Elements
+for i=1:length(StringerInd)
+    TopStringers.Ixx(i)=StringerArea*(Cy-TopStringers.posY(i))^2;
+    TopStringers.Iyy(i)=StringerArea*(Cx-TopStringers.posX(i))^2;
+    TopStringers.Ixy(i)=StringerArea*(Cy-TopStringers.posY(i))*...
+                        (Cx-TopStringers.posX(i));
+    
+    BotStringers.Ixx(i)=StringerArea*(Cy-BotStringers.posY(i))^2;
+    BotStringers.Iyy(i)=StringerArea*(Cx-BotStringers.posX(i))^2;
+    BotStringers.Ixy(i)=StringerArea*(Cy-BotStringers.posY(i))*...
+                        (Cx-BotStringers.posX(i));
+end
+
 Ixx=sum(Topel.Ixx(:))+sum(Botel.Ixx(:))+sum(Spars.Ixx(:))+...
-        sum(SparCaps.Ixx(:));
+        sum(SparCaps.Ixx(:))+sum(TopStringers.Ixx(:))+...
+        sum(BotStringers.Ixx(:));
 Iyy=sum(Topel.Iyy(:))+sum(Botel.Iyy(:))+sum(Spars.Iyy(:))+...
-        sum(SparCaps.Iyy(:));
+        sum(SparCaps.Iyy(:))+sum(TopStringers.Iyy(:))+...
+        sum(BotStringers.Iyy(:));
 Ixy=sum(Topel.Ixy(:))+sum(Botel.Ixy(:))+sum(Spars.Ixy(:))+...
-        sum(SparCaps.Ixy(:));
+        sum(SparCaps.Ixy(:))+sum(TopStringers.Ixy(:))+...
+        sum(BotStringers.Ixy(:));
 
 format short e
 disp('The Area Moment of Inertia are')
@@ -449,7 +506,7 @@ hold on
 plot(z,Load.udot(LC,:))
 plot(z,Load.u(LC,:),'r')
 legend('Bending Slope','Deflection','Location','NorthWest')
-title(['Bending Slope and Deflection in X direction',Criticalpt{LC}])
+title(['Bending Slope and Deflection in X direction at ',Criticalpt{LC}])
 xlabel('Length (m)')
 ylabel('Displacement (m)')
 grid on
@@ -489,6 +546,41 @@ figure()
 surf([Topel.posX(:)'; Topel.posX(:)'],[Topel.posY(1:80);Botel.posY(1:80)],SigmaZ{1,50}(:,:))
 
 %% Shear Flow
+% Creating Boom
+BIndex=sort([1, SparIndex, StringerInd]);
+B(:).posX=[nx(fliplr(BIndex)) nx(BIndex(2:end))];
+B(:).posY=[Topel.posY(fliplr(BIndex)) Botel.posY(BIndex(2:end))];
+B(:).value=zeros(1,length(B.posX));
+
+for i=1:length(B.posX)
+    if B.posY(i)>=0
+       Lleft=sqrt((B.posX(i)-B.posX(i+1))^2+(B.posY(i)-B.posY(i+1))^2)/2;
+       Lright=sqrt((B.posX(i)-B.posX(i-1))^2+(B.posY(i)-B.posY(i-1))^2)/2;
+       B.value(i)=skint*Lleft/6*(2+SigmaZ{LC,zi}(1,BIndex(i+1))/SigmaZ{LC,zi}(1,BIndex(i)))+...
+               skint*Lright/6*(2+SigmaZ{LC,zi}(1,BIndex(i-1))/SigmaZ{LC,zi}(1,BIndex(i)));
+       
+        
+    else 
+       Lleft=sqrt((B.posX(i)-B.posX(i+1))^2+(B.posY(i)-B.posY(i+1))^2)/2;
+       Lright=sqrt((B.posX(i)-B.posX(i-1))^2+(B.posY(i)-B.posY(i-1))^2)/2;
+       B.value(i)=skint*Lleft/6*(2+SigmaZ{LC,zi}(1,BIndex(i+1))/SigmaZ{LC,zi}(1,BIndex(i)))+...
+               skint*Lright/6*(2+SigmaZ{LC,zi}(1,BIndex(i-1))/SigmaZ{LC,zi}(1,BIndex(i)));
+        
+        
+    end
+end
+
+
+
+
+
+figure()
+hold on
+plot(B.posX,B.posY,'or')
+plot(nx,nytop(1:80),'b',nx,nybot(1:80),'b')
+xlim([-0.05,1.4])
+ylim([-0.3,0.3])
+grid on
 
 % Validate using Ex 20.4
 
