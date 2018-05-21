@@ -378,7 +378,10 @@ Load=struct('Wy',ones(12,length(z)), 'TotWy',zeros(12,length(z)),...
         
 % Critical Loads
 % PHAA PLAA NHAA NLAA PosGust NegGust (then repeat at 12k)
-Criticalpt={'PHAA','PosGust','PLAA','NLAA','NegGust','NHAA'};
+Criticalpt={'PHAA @SeaLevel','PosGust @SeaLevel','PLAA @SeaLevel',...
+            'NLAA @SeaLevel','NegGust @SeaLevel','NHAA @SeaLevel',...
+            'PHAA @12k','PosGust @12k','PLAA @12k',...
+            'NLAA @12k','NegGust @12k','NHAA @12k'};
 Loadcases=vn_find_alpha();  
 
 alpha=(Loadcases(:,1))';        % AoA in rad
@@ -389,7 +392,7 @@ vel=(Loadcases(:,5))';          % Speed [m/s]
 n=(Loadcases(:,6))';            % Load Factor
 
 
-for LC=1:6   % Going through all load cases
+for LC=1:12   % Going through all load cases
 
 % Calculate Lift Distribution
 L = n(LC)*Weight*.5;   %Total lift on a wing (for a half span)
@@ -449,40 +452,43 @@ for k=2:length(z)
 end
 
 % Moment
-CM=-0.007;
+CM=CM_coef(LC);
+M0=zeros(1,12);
+M0(LC)=1.5*0.5*rho_sea*vel(LC)^2*WingArea*5*CM;
 
-% Plot Wy
-figure()
-hold on
-plot(z,zeros(1,length(z)),'k', 'Linewidth',3)
-plot(z,Load.Wy(LC,:),'r')
-hAx=plotyy(z,Load.VWy(LC,:),z,Load.MWy(LC,:));
-legend('Beam','Applied Force','Shear','Moment')
-title(['Wy and Resultant Shear and Moment at ',Criticalpt{LC}])
-xlabel('Length (m)')
-ylabel(hAx(1), 'Applied Force/Shear (N)')
-ylabel(hAx(2), 'Moment (N-m)')
-grid on
-hold off
-% Plot Wx
-figure()
-hold on
-plot(z,zeros(1,length(z)),'k', 'Linewidth',3)
-plot(z,Load.Wx(LC,:),'r')
-hAx=plotyy(z,Load.VWx(LC,:),z,Load.MWx(LC,:));
-legend('Beam','Applied Force','Shear','Moment')
-title(['Wx and Resultant Shear and Moment at ',Criticalpt{LC}])
-xlabel('Length (m)')
-ylabel(hAx(1), 'Applied Force/Shear (N)')
-ylabel(hAx(2), 'Moment (N-m)')
-grid on
-hold off
+
+% % Plot Wy
+% figure()
+% hold on
+% plot(z,zeros(1,length(z)),'k', 'Linewidth',3)
+% plot(z,Load.Wy(LC,:),'r')
+% hAx=plotyy(z,Load.VWy(LC,:),z,Load.MWy(LC,:));
+% legend('Beam','Applied Force','Shear','Moment')
+% title(['Wy and Resultant Shear and Moment at ',Criticalpt{LC}])
+% xlabel('Length (m)')
+% ylabel(hAx(1), 'Applied Force/Shear (N)')
+% ylabel(hAx(2), 'Moment (N-m)')
+% grid on
+% hold off
+% % Plot Wx
+% figure()
+% hold on
+% plot(z,zeros(1,length(z)),'k', 'Linewidth',3)
+% plot(z,Load.Wx(LC,:),'r')
+% hAx=plotyy(z,Load.VWx(LC,:),z,Load.MWx(LC,:));
+% legend('Beam','Applied Force','Shear','Moment')
+% title(['Wx and Resultant Shear and Moment at ',Criticalpt{LC}])
+% xlabel('Length (m)')
+% ylabel(hAx(1), 'Applied Force/Shear (N)')
+% ylabel(hAx(2), 'Moment (N-m)')
+% grid on
+% hold off
 
 end     % End of for loop for load cases
 %% Calculat Bending Stress and Deflection
 K=1/(E*(Ixx*Iyy-Ixy^2));
 
-for LC=1:6
+for LC=1:12
 % Finding Slope
 for i=2:length(z)
     dz=z(i)-z(i-1);
@@ -501,34 +507,34 @@ for i=2:length(z)
     Load.v(LC,i)=Load.v(LC,i-1)+Load.vdot(LC,i)*dz;
 end
 
-%Plot Displacement
-figure()
-hold on
-plot(z,Load.udot(LC,:))
-plot(z,Load.u(LC,:),'r')
-legend('Bending Slope','Deflection','Location','NorthWest')
-title(['Bending Slope and Deflection in X direction at ',Criticalpt{LC}])
-xlabel('Length (m)')
-ylabel('Displacement (m)')
-grid on
-hold off
-
-figure()
-hold on
-plot(z,Load.vdot(LC,:))
-plot(z,Load.v(LC,:),'r')
-legend('Bending Slope','Deflection','Location','NorthWest')
-title(['Bending Slope and Deflection in Y direction at ',Criticalpt{LC}])
-xlabel('Length (m)')
-ylabel('Displacement (m)')
-grid on
-hold off
+% %Plot Displacement
+% figure()
+% hold on
+% plot(z,Load.udot(LC,:))
+% plot(z,Load.u(LC,:),'r')
+% legend('Bending Slope','Deflection','Location','NorthWest')
+% title(['Bending Slope and Deflection in X direction at ',Criticalpt{LC}])
+% xlabel('Length (m)')
+% ylabel('Displacement (m)')
+% grid on
+% hold off
+% 
+% figure()
+% hold on
+% plot(z,Load.vdot(LC,:))
+% plot(z,Load.v(LC,:),'r')
+% legend('Bending Slope','Deflection','Location','NorthWest')
+% title(['Bending Slope and Deflection in Y direction at ',Criticalpt{LC}])
+% xlabel('Length (m)')
+% ylabel('Displacement (m)')
+% grid on
+% hold off
 
 end % For Load Cases
 %% Direct Stress
 SigmaZ=cell(12,length(z));
 
-for LC=1:6 
+for LC=1:12 
   for zi=1:length(z)
       for ii=1:length(nx)
         % Top elements
@@ -554,7 +560,7 @@ B(:).posX=[nx(fliplr(BIndex)) nx(BIndex(2:end))];
 B(:).posY=[Topel.posY(fliplr(BIndex)) Botel.posY(BIndex(2:end))];
 % Creating Boom around the airfoil, from top right, around to bottom right.
 
-for LC=1:6 
+for LC=1:12 
   for zi=1:length(z)
     for i=1:length(BInd)
         % Determine if point on top or bottom
@@ -636,13 +642,13 @@ for i=1:SparIndex(1)-1
     C1Area=C1Area+(L+R)*H/2;
 end
 
-for LC=1:6 
+for LC=1:12 
   for zi=1:length(z)
     for i=C1Ind(1):C1Ind(2)
         qb1(LC,zi)=qb1(LC,zi)+...
                    (Load.VWy(LC,zi)*Ixy-Load.VWx(LC,zi)*Ixx)/denom*Bval{LC,zi}(i)*(B.posX(i)-Cx)+...
                    (Load.VWx(LC,zi)*Ixy-Load.VWy(LC,zi)*Iyy)/denom*Bval{LC,zi}(i)*(B.posY(i)-Cy); 
-    end     % Boom
+    end     % First Cell
   end   %Wingspan
 end     %Load Cases
 
@@ -657,20 +663,20 @@ for i=SparIndex(1):SparIndex(2)-1
     C2Area=C2Area+(L+R)*H/2;
 end
 
-for LC=1:6 
+for LC=1:12 
   for zi=1:length(z)
     for ii=1:length(C2Ind)
         i=C2Ind(ii);
         qb2(LC,zi)=qb2(LC,zi)+...
                    (Load.VWy(LC,zi)*Ixy-Load.VWx(LC,zi)*Ixx)/denom*Bval{LC,zi}(i)*(B.posX(i)-Cx)+...
                    (Load.VWx(LC,zi)*Ixy-Load.VWy(LC,zi)*Iyy)/denom*Bval{LC,zi}(i)*(B.posY(i)-Cy);    
-    end     % Boom
+    end     % 2nd Cell
   end   %Wingspan
 end     %Load Cases
 
 % Calculating Q1 Q2 and dtdz
 qC=zeros(3,3);
-qB=zeros(3,1);
+qB=cell(12,length(z));
 
 qC(1,3)=-1;
 qC(2,3)=-1;
@@ -680,21 +686,66 @@ qC(3,2)=2*C2Area;
 % Front Cell
 for i=C1Ind(1):C1Ind(2)-1
   qC(1,1)=qC(1,1)+sqrt((B.posX(i+1)-B.posX(i))^2+(B.posY(i+1)-B.posY(i))^2)/skint;
-end     % Boom
+end     % First Cell
 qC(1,1)=1/(2*C1Area*G)*(qC(1,1)+(Spars.Length(1))/spart);
 
 % Back Cell
 for ii=1:length(C2Ind)-1
   i=C2Ind(ii);
   qC(2,2)=qC(2,2)+sqrt((B.posX(i+1)-B.posX(i))^2+(B.posY(i+1)-B.posY(i))^2)/skint;         
-end     % Boom
+end     % 2nd Cell
 qC(2,2)=1/(2*C2Area*G)*(qC(2,2)+(Spars.Length(1))/spart+(Spars.Length(2))/spart);
 
 qC(1,2)=-1/(2*C1Area*G)*(Spars.Length(1))/spart;
 qC(2,1)=-1/(2*C2Area*G)*(Spars.Length(2))/spart;
 
+% Front Cell
+BX1=0;      BY1=0;      
+for LC=1:12 
+  for zi=1:length(z)
+    for i=C1Ind(1):C1Ind(2)-1
+      BX1=BX1+Bval{LC,zi}(i)*B.posX(i)*...
+          sqrt((B.posX(i+1)-B.posX(i))^2+(B.posY(i+1)-B.posY(i))^2)/skint;
+      BY1=BY1+Bval{LC,zi}(i)*B.posY(i)*...
+          sqrt((B.posX(i+1)-B.posX(i))^2+(B.posY(i+1)-B.posY(i))^2)/skint;
+    end     % First Cell
+    qB{LC,zi}(1)=-1/(2*C1Area*G)*...
+                 ((Load.VWy(LC,zi)*Ixy-Load.VWx(LC,zi)*Ixx)/denom*BX1+...
+                  (Load.VWx(LC,zi)*Ixy-Load.VWx(LC,zi)*Iyy)/denom*BY1);   
+  end   %Wingspan
+end     %Load Cases
 
+% Back Cell
+BX2=0;      BY2=0;
+for LC=1:12 
+  for zi=1:length(z)
+    for ii=1:length(C2Ind)-1
+      i=C2Ind(ii);  
+      BX2=BX2+Bval{LC,zi}(i)*B.posX(i)*...
+          sqrt((B.posX(i+1)-B.posX(i))^2+(B.posY(i+1)-B.posY(i))^2)/skint;
+      BY2=BY2+Bval{LC,zi}(i)*B.posY(i)*...
+          sqrt((B.posX(i+1)-B.posX(i))^2+(B.posY(i+1)-B.posY(i))^2)/skint;
+    end     % 2nd Cell
+    qB{LC,zi}(2)=-1/(2*C2Area*G)*...
+                 ((Load.VWy(LC,zi)*Ixy-Load.VWx(LC,zi)*Ixx)/denom*BX1+...
+                  (Load.VWx(LC,zi)*Ixy-Load.VWx(LC,zi)*Iyy)/denom*BY1);   
+  end   %Wingspan
+end     %Load Cases
 
+for LC=1:12 
+  for zi=1:length(z)
+    qB{LC,zi}(3)=M0(LC)+Load.VWy(LC,zi)*(.25*1.346-Cx)-...
+                 (2*qb1(LC,zi)*C1Area+2*qb2(LC,zi)*C2Area);
+  end   %Wingspan
+end     %Load Cases
+
+% Shear Flow
+ShearFlow=cell(12,length(z));
+for LC=1:12 
+  for zi=1:length(z)-1
+    ShearFlow{LC,zi}=qB{LC,zi}(1:3)'\qC;
+  end   %Wingspan
+end     %Load Cases
 
 % Validate using Ex 20.4
 
