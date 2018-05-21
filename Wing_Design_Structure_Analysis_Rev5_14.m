@@ -238,11 +238,12 @@ H=0.003;
 StringerArea=H+2*L; % Area m^2
 StringerGap=[1 SparIndex];
 numofStringer1=3;
-numofStringer2=3;
-Ind1=round((StringerGap(2)-StringerGap(1))/numofStringer1);
-Ind2=round((StringerGap(3)-StringerGap(2))/numofStringer2);
-StringerInd=[Ind1:Ind1:StringerGap(2) StringerGap(2)+...
-             Ind2:Ind2:StringerGap(3)];
+numofStringer2=4;
+Ind1=floor((StringerGap(2)-StringerGap(1))/numofStringer1);
+Ind2=floor((StringerGap(3)-StringerGap(2))/numofStringer2);
+StringerInd=[floor(Ind1/2):Ind1:StringerGap(2),...
+             StringerGap(2)+floor(Ind2/2):Ind2:StringerGap(3)];
+
 
 TopStringers=struct('posX',nx(StringerInd),'posY',nytop(StringerInd),...
         'cx',nx(StringerInd),'cy',nytop(StringerInd)-H/2,...
@@ -517,7 +518,7 @@ hold on
 plot(z,Load.vdot(LC,:))
 plot(z,Load.v(LC,:),'r')
 legend('Bending Slope','Deflection','Location','NorthWest')
-title(['Bending Slope and Deflection in Y direction',Criticalpt{LC}])
+title(['Bending Slope and Deflection in Y direction at ',Criticalpt{LC}])
 xlabel('Length (m)')
 ylabel('Displacement (m)')
 grid on
@@ -528,52 +529,90 @@ end % For Load Cases
 SigmaZ=cell(12,length(z));
 
 for LC=1:6 
-  for i=1:length(z)
+  for zi=1:length(z)
       for ii=1:length(nx)
-        SigmaZ{LC,i}(1,ii)=(Load.MWx(LC,i)*(Iyy*(Topel.posY(ii)-Cy)-...
+        % Top elements
+        SigmaZ{LC,zi}(1,ii)=(Load.MWx(LC,zi)*(Iyy*(Topel.posY(ii)-Cy)-...
                             Ixy*(Topel.posX(ii)-Cx))+...
-                            Load.MWy(LC,i)*(Ixx*(Topel.posX(ii)-Cx)-...
+                            Load.MWy(LC,zi)*(Ixx*(Topel.posX(ii)-Cx)-...
                             Ixy*(Topel.posY(ii)-Cy)))/(Ixx*Iyy-Ixy^2);
-        SigmaZ{LC,i}(2,ii)=(Load.MWx(LC,i)*(Iyy*(Botel.posY(ii)-Cy)-...
+        % Bottom elements
+        SigmaZ{LC,zi}(2,ii)=(Load.MWx(LC,zi)*(Iyy*(Botel.posY(ii)-Cy)-...
                             Ixy*(Botel.posX(ii)-Cx))+...
-                            Load.MWy(LC,i)*(Ixx*(Botel.posX(ii)-Cx)-...
+                            Load.MWy(LC,zi)*(Ixx*(Botel.posX(ii)-Cx)-...
                             Ixy*(Botel.posY(ii)-Cy)))/(Ixx*Iyy-Ixy^2);
       end       % Wing width
   end     % WingSpan
 end     % Load Cases
 
-figure()
-surf([Topel.posX(:)'; Topel.posX(:)'],[Topel.posY(1:80);Botel.posY(1:80)],SigmaZ{1,50}(:,:))
-
-%% Shear Flow
+%% Shear Flow --- Creating Boom
 % Creating Boom
+Bval=cell(12,length(z));
 BIndex=sort([1, SparIndex, StringerInd]);
+BInd=[fliplr(BIndex) BIndex(2:end)];
 B(:).posX=[nx(fliplr(BIndex)) nx(BIndex(2:end))];
 B(:).posY=[Topel.posY(fliplr(BIndex)) Botel.posY(BIndex(2:end))];
-B(:).value=zeros(1,length(B.posX));
+% Creating Boom around the airfoil, from top right, around to bottom right.
 
-for i=1:length(B.posX)
-    if B.posY(i)>=0
-       Lleft=sqrt((B.posX(i)-B.posX(i+1))^2+(B.posY(i)-B.posY(i+1))^2)/2;
-       Lright=sqrt((B.posX(i)-B.posX(i-1))^2+(B.posY(i)-B.posY(i-1))^2)/2;
-       B.value(i)=skint*Lleft/6*(2+SigmaZ{LC,zi}(1,BIndex(i+1))/SigmaZ{LC,zi}(1,BIndex(i)))+...
-               skint*Lright/6*(2+SigmaZ{LC,zi}(1,BIndex(i-1))/SigmaZ{LC,zi}(1,BIndex(i)));
-       
+for LC=1:6 
+  for zi=1:length(z)
+    for i=1:length(BInd)
+        % Determine if point on top or bottom
+        if i<round(length(BInd)/2)
+           tb=1;    % Top
+        elseif i>round(length(BInd)/2) 
+           tb=2;    % Bottom
+        end
         
-    else 
-       Lleft=sqrt((B.posX(i)-B.posX(i+1))^2+(B.posY(i)-B.posY(i+1))^2)/2;
-       Lright=sqrt((B.posX(i)-B.posX(i-1))^2+(B.posY(i)-B.posY(i-1))^2)/2;
-       B.value(i)=skint*Lleft/6*(2+SigmaZ{LC,zi}(1,BIndex(i+1))/SigmaZ{LC,zi}(1,BIndex(i)))+...
-               skint*Lright/6*(2+SigmaZ{LC,zi}(1,BIndex(i-1))/SigmaZ{LC,zi}(1,BIndex(i)));
+        % First Boom
+        if i==1
+            Dleft=sqrt((B.posX(i)-B.posX(i+1))^2+(B.posY(i)-B.posY(i+1))^2);
+            Dright=sqrt((B.posX(i)-B.posX(length(BInd)))^2+(B.posY(i)-B.posY(length(BInd)))^2);
+            Bval{LC,zi}(i)=skint*Dleft/6*(2+SigmaZ{LC,zi}(1,BInd(i+1))/SigmaZ{LC,zi}(1,BInd(i)))+...
+                           spart*Dright/6*(2+SigmaZ{LC,zi}(2,length(BInd))/SigmaZ{LC,zi}(1,length(BInd)))+...
+                           SparCaps.Area(5);
+        % Last Boom           
+        elseif i==length(BInd)
+            Dleft=sqrt((B.posX(i)-B.posX(i-1))^2+(B.posY(i)-B.posY(i-1))^2);
+            Dright=sqrt((B.posX(i)-B.posX(1))^2+(B.posY(i)-B.posY(1))^2);
+            Bval{LC,zi}(i)=skint*Dleft/6*(2+SigmaZ{LC,zi}(1,BInd(i-1))/SigmaZ{LC,zi}(1,BInd(i)))+...
+                           spart*Dright/6*(2+SigmaZ{LC,zi}(1,1)/SigmaZ{LC,zi}(2,BInd(i)))+...
+                           SparCaps.Area(6);
+        % Boom on Stringers               
+        elseif any(i==StringerInd)
+            Dleft=sqrt((B.posX(i)-B.posX(i+1))^2+(B.posY(i)-B.posY(i+1))^2);
+            Dright=sqrt((B.posX(i)-B.posX(i-1))^2+(B.posY(i)-B.posY(i-1))^2);
+            Bval{LC,zi}(i)=skint*Dleft/6*(2+SigmaZ{LC,zi}(tb,BInd(i+1))/SigmaZ{LC,zi}(tb,BInd(i)))+...
+                           skint*Dright/6*(2+SigmaZ{LC,zi}(tb,BInd(i-1))/SigmaZ{LC,zi}(tb,BInd(i)))+...
+                           StringerArea;
+        % Boom at nose
+        elseif i==round(length(BInd)/2) 
+            Dleft=sqrt((B.posX(i)-B.posX(i+1))^2+(B.posY(i)-B.posY(i+1))^2);
+            Dright=sqrt((B.posX(i)-B.posX(i-1))^2+(B.posY(i)-B.posY(i-1))^2);
+            Bval{LC,zi}(i)=skint*Dleft/6*(2+SigmaZ{LC,zi}(2,BInd(i+1))/SigmaZ{LC,zi}(1,BInd(i)))+...
+                           skint*Dright/6*(2+SigmaZ{LC,zi}(1,BInd(i-1))/SigmaZ{LC,zi}(1,BInd(i)));
+        % Boom at 1st Spar
+        elseif BInd(i)==SparIndex(1)
+            Dleft=sqrt((B.posX(i)-B.posX(i+1))^2+(B.posY(i)-B.posY(i+1))^2);
+            Dright=sqrt((B.posX(i)-B.posX(i-1))^2+(B.posY(i)-B.posY(i-1))^2);
+            Bval{LC,zi}(i)=skint*Dleft/6*(2+SigmaZ{LC,zi}(tb,BInd(i+1))/SigmaZ{LC,zi}(tb,BInd(i)))+...
+                           skint*Dright/6*(2+SigmaZ{LC,zi}(tb,BInd(i-1))/SigmaZ{LC,zi}(tb,BInd(i)))+...
+                           spart*Spars.Length(1)/6*(2+SigmaZ{LC,zi}(abs(tb-3),BInd(i))/SigmaZ{LC,zi}(tb,BInd(i)))+...
+                           2*SparCaps.Area(1);
+        else
+            Dleft=sqrt((B.posX(i)-B.posX(i+1))^2+(B.posY(i)-B.posY(i+1))^2);
+            Dright=sqrt((B.posX(i)-B.posX(i-1))^2+(B.posY(i)-B.posY(i-1))^2);
+            Bval{LC,zi}(i)=skint*Dleft/6*(2+SigmaZ{LC,zi}(tb,BInd(i+1))/SigmaZ{LC,zi}(tb,BInd(i)))+...
+                       skint*Dright/6*(2+SigmaZ{LC,zi}(tb,BInd(i-1))/SigmaZ{LC,zi}(tb,BInd(i)));
+        end % If Statment
         
-        
-    end
-end
+    end     % Booms
+    
+  end       % Wingspan
+  
+end         % End loop for load cases
 
-
-
-
-
+% Plot boom locations
 figure()
 hold on
 plot(B.posX,B.posY,'or')
@@ -581,9 +620,83 @@ plot(nx,nytop(1:80),'b',nx,nybot(1:80),'b')
 xlim([-0.05,1.4])
 ylim([-0.3,0.3])
 grid on
+hold off
+
+%% Shear Flow
+G=28*10^9;  % Shear Modulus [Pa]
+denom=Ixx*Iyy-Ixy^2;
+% Front Cell
+qb1=zeros(12,length(z));
+C1Ind=find(BInd==SparIndex(1));
+C1Area=0;
+for i=1:SparIndex(1)-1
+    L=Topel.posY(i)-Botel.posY(i);
+    R=Topel.posY(i+1)-Botel.posY(i+1);
+    H=Topel.posX(i+1)-Topel.posX(i);
+    C1Area=C1Area+(L+R)*H/2;
+end
+
+for LC=1:6 
+  for zi=1:length(z)
+    for i=C1Ind(1):C1Ind(2)
+        qb1(LC,zi)=qb1(LC,zi)+...
+                   (Load.VWy(LC,zi)*Ixy-Load.VWx(LC,zi)*Ixx)/denom*Bval{LC,zi}(i)*(B.posX(i)-Cx)+...
+                   (Load.VWx(LC,zi)*Ixy-Load.VWy(LC,zi)*Iyy)/denom*Bval{LC,zi}(i)*(B.posY(i)-Cy); 
+    end     % Boom
+  end   %Wingspan
+end     %Load Cases
+
+% Back Cell
+qb2=zeros(12,length(z));
+C2Ind=[1:C1Ind(1) C1Ind(2):length(BInd)];
+C2Area=0;
+for i=SparIndex(1):SparIndex(2)-1
+    L=Topel.posY(i)-Botel.posY(i);
+    R=Topel.posY(i+1)-Botel.posY(i+1);
+    H=Topel.posX(i+1)-Topel.posX(i);
+    C2Area=C2Area+(L+R)*H/2;
+end
+
+for LC=1:6 
+  for zi=1:length(z)
+    for ii=1:length(C2Ind)
+        i=C2Ind(ii);
+        qb2(LC,zi)=qb2(LC,zi)+...
+                   (Load.VWy(LC,zi)*Ixy-Load.VWx(LC,zi)*Ixx)/denom*Bval{LC,zi}(i)*(B.posX(i)-Cx)+...
+                   (Load.VWx(LC,zi)*Ixy-Load.VWy(LC,zi)*Iyy)/denom*Bval{LC,zi}(i)*(B.posY(i)-Cy);    
+    end     % Boom
+  end   %Wingspan
+end     %Load Cases
+
+% Calculating Q1 Q2 and dtdz
+qC=zeros(3,3);
+qB=zeros(3,1);
+
+qC(1,3)=-1;
+qC(2,3)=-1;
+qC(3,1)=2*C1Area;
+qC(3,2)=2*C2Area;
+
+% Front Cell
+for i=C1Ind(1):C1Ind(2)-1
+  qC(1,1)=qC(1,1)+sqrt((B.posX(i+1)-B.posX(i))^2+(B.posY(i+1)-B.posY(i))^2)/skint;
+end     % Boom
+qC(1,1)=1/(2*C1Area*G)*(qC(1,1)+(Spars.Length(1))/spart);
+
+% Back Cell
+for ii=1:length(C2Ind)-1
+  i=C2Ind(ii);
+  qC(2,2)=qC(2,2)+sqrt((B.posX(i+1)-B.posX(i))^2+(B.posY(i+1)-B.posY(i))^2)/skint;         
+end     % Boom
+qC(2,2)=1/(2*C2Area*G)*(qC(2,2)+(Spars.Length(1))/spart+(Spars.Length(2))/spart);
+
+qC(1,2)=-1/(2*C1Area*G)*(Spars.Length(1))/spart;
+qC(2,1)=-1/(2*C2Area*G)*(Spars.Length(2))/spart;
+
+
+
 
 % Validate using Ex 20.4
-
 
 %% Buckling Analysis
 
