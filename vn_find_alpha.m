@@ -80,7 +80,7 @@ function alpha = vn_find_alpha()
         
     end
         for i = 1:12
-            temp(i,4) = 0.056;
+            temp(i,4) = -0.056;
         end
         alpha = [temp, vn_points];
         

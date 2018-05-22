@@ -30,13 +30,13 @@ vn_points = [50.4361, 4.4;...
  rho_12k = 0.8514;  % [kg/m^3]
  n1_sea = (0.5*rho_sea.*V_1sea.^2)*s*CL_pmax_sea/(w);
  n2_sea = [4.4 4.4 -1 -1.76 -1.76];
- n6_sea = (0.5*rho_sea.*V_6sea.^2)*s*CL_nmax_sea/w;
+ n6_sea = -(0.5*rho_sea.*V_6sea.^2)*s/w;
  V_2sea = [vn_points(1,1) 131.2 131.2 87.5 vn_points(6,1)];
  
- n1_12k = (0.5*rho_12k.*V_112k.^2)*s*CL_pmax_12k/w;
+ n1_12k = (0.5*rho_12k.*V_112k.^2)*s/w;
  n2_12k = [4.4 -1 -1.76 -1.76];
- n3_12k = -(0.5*rho_12k.*V_612k.^2)*CL_nmax_12k*s/w;
+ n3_12k = -(0.5*rho_12k.*V_612k.^2)*s/w;
  
- plot(V_1sea,n1_sea,'b',V_2sea,n2_sea,'b',V_6sea,n6_sea,'b')
+ plot(V_1sea,n1_sea,V_2sea,n2_sea,V_6sea,n6_sea,'b')
  
             
