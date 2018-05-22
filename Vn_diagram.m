@@ -34,9 +34,32 @@ vn_points = [50.4361, 4.4;...
  V_2sea = [vn_points(1,1) 131.2 131.2 87.5 vn_points(6,1)];
  
  n1_12k = (0.5*rho_12k.*V_112k.^2)*s*CL_pmax_12k/w;
- n2_12k = [4.4 -1 -1.76 -1.76];
- n3_12k = -(0.5*rho_12k.*V_612k.^2)*CL_nmax_12k*s/w;
+ n2_12k = [4.4 4.4 -1 -1.76 -1.76];
+ n6_12k = (0.5*rho_12k.*V_612k.^2)*CL_nmax_12k*s/w;
+ V_212k = [vn_points(7,1) 131.2 131.2 87.5 vn_points(12,1)];
+ 
+ n_gust_sea = [0 vn_points(2,2) vn_points(3,2) 0 vn_points(4,2) vn_points(5,2) 0];
+ v_gust_sea = [0 vn_points(2,1) vn_points(3,1) 0 vn_points(4,1) vn_points(5,1) 0];
+ n_gust_12k = [0 vn_points(8,2) vn_points(9,2) 0 vn_points(10,2) vn_points(11,2) 0];
+ v_gust_12k = [0 vn_points(8,1) vn_points(9,1) 0 vn_points(10,1) vn_points(11,1) 0];
  
  plot(V_1sea,n1_sea,'b',V_2sea,n2_sea,'b',V_6sea,n6_sea,'b')
+ hold on
+ plot(v_gust_sea,n_gust_sea,'g--')
+
+ grid on
+xlabel('velocity (m/s)')
+ylabel('load')
+title('at sea level')
+ figure (2)
+
+ plot(V_112k,n1_12k,'b',V_212k,n2_12k,'b',V_612k,n6_12k,'b')
+  hold on
+ plot(v_gust_12k,n_gust_12k,'g--')
  
+ grid on
+ xlabel('velocity (m/s)')
+ylabel('load')
+title('at 12k feet')
+
             
