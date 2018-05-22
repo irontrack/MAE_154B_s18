@@ -38,10 +38,10 @@ vn_points = [50.4361, 4.4;...
  n6_12k = (0.5*rho_12k.*V_612k.^2)*CL_nmax_12k*s/w;
  V_212k = [vn_points(7,1) 131.2 131.2 87.5 vn_points(12,1)];
  
- n_gust_sea = [0 vn_points(2,2) vn_points(3,2) 0 vn_points(4,2) vn_points(5,2) 0];
- v_gust_sea = [0 vn_points(2,1) vn_points(3,1) 0 vn_points(4,1) vn_points(5,1) 0];
- n_gust_12k = [0 vn_points(8,2) vn_points(9,2) 0 vn_points(10,2) vn_points(11,2) 0];
- v_gust_12k = [0 vn_points(8,1) vn_points(9,1) 0 vn_points(10,1) vn_points(11,1) 0];
+ n_gust_sea = [1 vn_points(2,2) vn_points(3,2) 1 vn_points(4,2) vn_points(5,2) 1];
+ v_gust_sea = [1 vn_points(2,1) vn_points(3,1) 1 vn_points(4,1) vn_points(5,1) 1];
+ n_gust_12k = [1 vn_points(8,2) vn_points(9,2) 1 vn_points(10,2) vn_points(11,2) 1];
+ v_gust_12k = [1 vn_points(8,1) vn_points(9,1) 1 vn_points(10,1) vn_points(11,1) 1];
  
  plot(V_1sea,n1_sea,'b',V_2sea,n2_sea,'b',V_6sea,n6_sea,'b')
  hold on
