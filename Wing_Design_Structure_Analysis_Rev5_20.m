@@ -235,7 +235,7 @@ Cysparcap=YiAisparcap/SparCapArea;
 % Thickness are 1 mm
 L=0.002;
 H=0.003;
-StringerArea=H+2*L; % Area m^2
+StringerArea1=H*0.001+2*L*0.001; % Area m^2
 StringerGap=[1 SparIndex];
 numofStringer1=3;
 numofStringer2=4;
@@ -258,15 +258,14 @@ BotStringers=struct('posX',nx(StringerInd),'posY',nybot(StringerInd),...
 
 XiAiStringer=0;    
 YiAiStringer=0;
-
 for i=1:length(StringerInd)
-    XiAiStringer=XiAiStringer+TopStringers.posX(i)*StringerArea+...
-                 BotStringers.posX(i)*StringerArea;
-    YiAiStringer=YiAiStringer+TopStringers.posY(i)*StringerArea+...
-                 BotStringers.posY(i)*StringerArea;       
+    XiAiStringer=XiAiStringer+TopStringers.cx(i)*StringerArea1+...
+                 BotStringers.cx(i)*StringerArea1;
+    YiAiStringer=YiAiStringer+TopStringers.cy(i)*StringerArea1+...
+                 BotStringers.cy(i)*StringerArea1;       
 end
 
-StringerArea=numel(StringerInd)*2*StringerArea;
+StringerArea=numel(StringerInd)*2*StringerArea1;
 
 %% Calculate Total Centroid
 Cx=(XiAiairf+XiAiSpar+XiAisparcap+XiAiStringer)/...
@@ -331,14 +330,14 @@ end
 
 % Stringers Elements
 for i=1:length(StringerInd)
-    TopStringers.Ixx(i)=StringerArea*(Cy-TopStringers.posY(i))^2;
-    TopStringers.Iyy(i)=StringerArea*(Cx-TopStringers.posX(i))^2;
-    TopStringers.Ixy(i)=StringerArea*(Cy-TopStringers.posY(i))*...
+    TopStringers.Ixx(i)=StringerArea1*(Cy-TopStringers.posY(i))^2;
+    TopStringers.Iyy(i)=StringerArea1*(Cx-TopStringers.posX(i))^2;
+    TopStringers.Ixy(i)=StringerArea1*(Cy-TopStringers.posY(i))*...
                         (Cx-TopStringers.posX(i));
     
-    BotStringers.Ixx(i)=StringerArea*(Cy-BotStringers.posY(i))^2;
-    BotStringers.Iyy(i)=StringerArea*(Cx-BotStringers.posX(i))^2;
-    BotStringers.Ixy(i)=StringerArea*(Cy-BotStringers.posY(i))*...
+    BotStringers.Ixx(i)=StringerArea1*(Cy-BotStringers.posY(i))^2;
+    BotStringers.Iyy(i)=StringerArea1*(Cx-BotStringers.posX(i))^2;
+    BotStringers.Ixy(i)=StringerArea1*(Cy-BotStringers.posY(i))*...
                         (Cx-BotStringers.posX(i));
 end
 
@@ -348,9 +347,9 @@ Ixx=sum(Topel.Ixx(:))+sum(Botel.Ixx(:))+sum(Spars.Ixx(:))+...
 Iyy=sum(Topel.Iyy(:))+sum(Botel.Iyy(:))+sum(Spars.Iyy(:))+...
         sum(SparCaps.Iyy(:))+sum(TopStringers.Iyy(:))+...
         sum(BotStringers.Iyy(:));
-Ixy=sum(Topel.Ixy(:))+sum(Botel.Ixy(:))+sum(Spars.Ixy(:))+...
+Ixy=-(sum(Topel.Ixy(:))+sum(Botel.Ixy(:))+sum(Spars.Ixy(:))+...
         sum(SparCaps.Ixy(:))+sum(TopStringers.Ixy(:))+...
-        sum(BotStringers.Ixy(:));
+        sum(BotStringers.Ixy(:)));
 
 format short e
 disp('The Area Moment of Inertia are')
@@ -674,7 +673,7 @@ for LC=1:12
             Dright=sqrt((B.posX(i)-B.posX(i-1))^2+(B.posY(i)-B.posY(i-1))^2);
             Bval{LC,zi}(i)=skint*Dleft/6*(2+SigmaZ{LC,zi}(tb,BInd(i+1))/SigmaZ{LC,zi}(tb,BInd(i)))+...
                            skint*Dright/6*(2+SigmaZ{LC,zi}(tb,BInd(i-1))/SigmaZ{LC,zi}(tb,BInd(i)))+...
-                           StringerArea;
+                           StringerArea1;
         % Boom at nose
         elseif i==round(length(BInd)/2) 
             Dleft=sqrt((B.posX(i)-B.posX(i+1))^2+(B.posY(i)-B.posY(i+1))^2);
@@ -877,6 +876,16 @@ zlabel('Shear Flow (N/m)')
 grid on
 end     % Load Cases
 
+%% Check Centriod/Inertia Error
+CX=0.528864; CY=0.014876;
+IXX=1.2*10^-5; IYY=0.000549; IXY=-3*10^-6;
+Cx_Error=(CX-Cx)/CX*100;
+Cy_Error=(CY-Cy)/CY*100;
+IXX_Error=(IXX-Ixx)/IXX*100;
+IYY_Error=(IYY-Iyy)/IYY*100;
+IXY_Error=(IXY-Ixy)/IXY*100;
+disp('Error for Cx, Cy, Ixx, Iyy, Ixy are following %: ')
+disp([Cx_Error,Cy_Error,IXX_Error,IYY_Error,IXY_Error])
 %% Buckling Analysis
 
 
