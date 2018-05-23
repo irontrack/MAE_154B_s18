@@ -243,7 +243,7 @@ Ind1=floor((StringerGap(2)-StringerGap(1))/numofStringer1);
 Ind2=floor((StringerGap(3)-StringerGap(2))/numofStringer2);
 StringerInd=[floor(Ind1/2):Ind1:StringerGap(2),...
              StringerGap(2)+floor(Ind2/2):Ind2:StringerGap(3)];
-
+StringerInd=StringerInd(StringerInd~=SparIndex(1));
 
 TopStringers=struct('posX',nx(StringerInd),'posY',nytop(StringerInd),...
         'cx',nx(StringerInd),'cy',nytop(StringerInd)-H/2,...
@@ -559,29 +559,6 @@ for i=2:length(z)
     Load.v(LC,i)=Load.v(LC,i-1)+Load.vdot(LC,i)*dz;
 end
 
-% %Plot Displacement
-% figure()
-% hold on
-% plot(z,Load.udot(LC,:))
-% plot(z,Load.u(LC,:),'r')
-% legend('Bending Slope','Deflection','Location','NorthWest')
-% title(['Bending Slope and Deflection in X direction at ',Criticalpt{LC}])
-% xlabel('Length (m)')
-% ylabel('Displacement (m)')
-% grid on
-% hold off
-% 
-% figure()
-% hold on
-% plot(z,Load.vdot(LC,:))
-% plot(z,Load.v(LC,:),'r')
-% legend('Bending Slope','Deflection','Location','NorthWest')
-% title(['Bending Slope and Deflection in Y direction at ',Criticalpt{LC}])
-% xlabel('Length (m)')
-% ylabel('Displacement (m)')
-% grid on
-% hold off
-
 end % For Load Cases
 
 figure()
@@ -629,18 +606,35 @@ for LC=1:12
   end     % WingSpan
 end     % Load Cases
 
-SZ=zeros(length(z)/10,length(nx));
+% Plot SigmaZ on the surface
+Topfoil=ones(length(z)/10,length(nx));
+Botfoil=ones(length(z)/10,length(nx));
+for kk=1:length(z)/10
+  Topfoil(kk,:)=Topel.posY(1:80);
+  Botfoil(kk,:)=Botel.posY(1:80);
+end
+
+for LC=1:12
+SZtop=zeros(length(z)/10,length(nx));
+SZbot=zeros(length(z)/10,length(nx));
 for zi=1:length(z)/10
-    SZ(zi,:)=SigmaZ{1,10*zi}(1,:);
+    SZtop(zi,:)=SigmaZ{LC,10*zi}(1,:);
+    SZbot(zi,:)=SigmaZ{LC,10*zi}(2,:);
 end
 
 figure()
-surf(SZ)
+hold on
+surf(Topfoil,SZtop)
+surf(Botfoil,SZbot)
+view([-45, -45, 45])
+zlim([-0.15 0.15])
+colorbar
+title(['Plot of SigmaZ at ',Criticalpt(LC)])
 xlabel('x length (m)')
 ylabel('z length (m)')
-zlabel('SigmaZ (Pa)')
-colorbar
+zlabel('y length (m)')
 grid on
+end     % Load Cases
 %% Shear Flow --- Creating Boom
 % Creating Boom
 Bval=cell(12,length(z));
@@ -834,10 +828,54 @@ ShearFlow12=cell(12,length(z));
 for LC=1:12 
   for zi=1:length(z)-1
     ShearFlow12{LC,zi}=qB{LC,zi}(1:3)'\qC;
+    ShearFlow12{LC,length(z)}=0;
   end   %Wingspan
 end     %Load Cases
 
-% Validate using Ex 20.4
+
+% Calculating Total Shear Flow
+ShearFlow=cell(12,length(z));
+for LC=1:12 
+  for zi=1:length(z)-1
+    for i=1:length(BInd)
+      if i>C1Ind(1) && i<C1Ind(2)         % If in cell 1
+        ShearFlow{LC,zi}(i)=ShearFlow12{LC,zi}(1);
+      elseif i<C1Ind(1) || i>C1Ind(2)     % If in cell 2
+        ShearFlow{LC,zi}(i)=ShearFlow12{LC,zi}(2);
+      elseif i==C1Ind(1) || i==C1Ind(2)   % If at Spar
+        ShearFlow{LC,zi}(i)=ShearFlow12{LC,zi}(1)+...
+                            ShearFlow12{LC,zi}(2);
+      end     % If Statement
+      ShearFlow{LC,length(z)}=zeros(1,length(BInd));
+    end         % Boom
+  end           % Wingspan
+end             % Load Cases
+
+%% Plotting Shear Flow
+SFZ=ones(length(BInd),length(z)/10);
+SFX=ones(length(BInd),length(z)/10);
+SF=ones(length(BInd),length(z)/10);
+
+for zz=1:length(z)/10
+  SFX(:,zz)=1:length(BInd);
+end
+
+for bb=1:length(BInd)
+  SFZ(bb,:)=1:length(z)/10;
+end
+
+for LC=1:12
+figure()
+for zz=1:length(z)/10
+ SF(:,zz)=ShearFlow{LC,zz}(:);
+end
+plot3(SFZ,SFX,SF,'Linewidth',2)
+title(['Plot of Shear Flow at ',Criticalpt(LC)])
+xlabel('Z direction (m)')
+ylabel('Nodes')
+zlabel('Shear Flow (N/m)')
+grid on
+end     % Load Cases
 
 %% Buckling Analysis
 
