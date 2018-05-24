@@ -888,5 +888,7 @@ disp('Error for Cx, Cy, Ixx, Iyy, Ixy are following %: ')
 disp([Cx_Error,Cy_Error,IXX_Error,IYY_Error,IXY_Error])
 %% Buckling Analysis
 
+%% Save SigmaZZ
 
+save('Sigma_ZZ.mat','SigmaZ')
 
