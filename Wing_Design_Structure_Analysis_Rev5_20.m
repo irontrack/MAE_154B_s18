@@ -44,7 +44,7 @@ writetable(table(x',nybot',zeros(length(x),1)),'NACA2412 Refined Bot.txt');
 
 %% Create Elements
 
-%% Create Airfoil Elements
+% Create Airfoil Elements
 % All Nodes for airfoil are in the inner side of the elements
 skint=0.002;  % Skin thickness
 Topel=struct('posX',nx,'posY',nytop,...
@@ -62,6 +62,7 @@ Botel=struct('posX',nx,'posY',nybot,...
 
 % Calculate Aera and Centroid of Each Element, Plot Results
 figure()
+set(gca,'FontSize',14)
 hold on
 XiAiairf=0;
 YiAiairf=0;
@@ -275,8 +276,8 @@ Cy=(YiAiairf+YiAiSpar+YiAisparcap+YiAiStringer)/...
 
 plot(Cx,Cy,'r*')
 title('Centroids and Element Plot')
-xlim([-0.05,1.4])
-ylim([-0.5,0.5])
+xlim([-0.05,1.2])
+ylim([-0.4,0.4])
 xlabel('Length (m)')
 ylabel('Length (m)')
 grid on
@@ -354,6 +355,17 @@ Ixy=-(sum(Topel.Ixy(:))+sum(Botel.Ixy(:))+sum(Spars.Ixy(:))+...
 format short e
 disp('The Area Moment of Inertia are')
 disp([Ixx Iyy Ixy])
+
+%% Check Centriod/Inertia Error
+CX=0.528864; CY=0.014876;
+IXX=1.2*10^-5; IYY=0.000549; IXY=-3*10^-6;
+Cx_Error=(CX-Cx)/CX*100;
+Cy_Error=(CY-Cy)/CY*100;
+IXX_Error=(IXX-Ixx)/IXX*100;
+IYY_Error=(IYY-Iyy)/IYY*100;
+IXY_Error=(IXY-Ixy)/IXY*100;
+disp('Error for Cx, Cy, Ixx, Iyy, Ixy are following %: ')
+disp([Cx_Error,Cy_Error,IXX_Error,IYY_Error,IXY_Error])
 
 %% Stress Analysis
 % Constants
@@ -459,7 +471,9 @@ end     % End of for loop for load cases
 
 % plot all Wx,Wy VWx,Vwy,MWx,MWy at Sea Level
 color=['r','g','b','k','c','m'];
+
 figure()
+set(gca,'FontSize',14)
 hold on
 for LC=1:6
 plot(z,Load.Wx(LC,:),color(LC),'Linewidth',2)
@@ -473,6 +487,7 @@ grid on
 hold off
 
 figure()
+set(gca,'FontSize',14)
 hold on
 for LC=1:6
 plot(z,Load.Wy(LC,:),color(LC),'Linewidth',2)
@@ -486,6 +501,7 @@ grid on
 hold off
 
 figure()
+set(gca,'FontSize',14)
 hold on
 for LC=1:6
 plot(z,Load.VWx(LC,:),color(LC),'Linewidth',2)
@@ -499,6 +515,7 @@ grid on
 hold off
 
 figure()
+set(gca,'FontSize',14)
 hold on
 for LC=1:6
 plot(z,Load.VWy(LC,:),color(LC),'Linewidth',2)
@@ -512,6 +529,7 @@ grid on
 hold off
 
 figure()
+set(gca,'FontSize',14)
 hold on
 for LC=1:6
 plot(z,Load.MWx(LC,:),color(LC),'Linewidth',2)
@@ -525,6 +543,7 @@ grid on
 hold off
 
 figure()
+set(gca,'FontSize',14)
 hold on
 for LC=1:6
 plot(z,Load.MWy(LC,:),color(LC),'Linewidth',2)
@@ -561,6 +580,7 @@ end
 end % For Load Cases
 
 figure()
+set(gca,'FontSize',14)
 hold on
 for LC=1:6
 plot(z,Load.u(LC,:),color(LC),'Linewidth',2)
@@ -574,6 +594,7 @@ grid on
 hold off
 
 figure()
+set(gca,'FontSize',14)
 hold on
 for LC=1:6
 plot(z,Load.v(LC,:),color(LC),'Linewidth',2)
@@ -613,7 +634,7 @@ for kk=1:length(z)/10
   Botfoil(kk,:)=Botel.posY(1:80);
 end
 
-for LC=1:12
+for LC=1:6
 SZtop=zeros(length(z)/10,length(nx));
 SZbot=zeros(length(z)/10,length(nx));
 for zi=1:length(z)/10
@@ -622,6 +643,7 @@ for zi=1:length(z)/10
 end
 
 figure()
+set(gca,'FontSize',14)
 hold on
 surf(Topfoil,SZtop)
 surf(Botfoil,SZbot)
@@ -634,6 +656,9 @@ ylabel('z length (m)')
 zlabel('y length (m)')
 grid on
 end     % Load Cases
+
+% Save SigmaZZ
+save('Sigma_ZZ.mat','SigmaZ')
 %% Shear Flow --- Creating Boom
 % Creating Boom
 Bval=cell(12,length(z));
@@ -703,6 +728,7 @@ end         % End loop for load cases
 
 % Plot boom locations
 figure()
+set(gca,'FontSize',14)
 hold on
 plot(B.posX,B.posY,'or')
 plot(nx,nytop(1:80),'b',nx,nybot(1:80),'b')
@@ -863,8 +889,9 @@ for bb=1:length(BInd)
   SFZ(bb,:)=1:length(z)/10;
 end
 
-for LC=1:12
+for LC=1:6
 figure()
+set(gca,'FontSize',14)
 for zz=1:length(z)/10
  SF(:,zz)=ShearFlow{LC,zz}(:);
 end
@@ -876,19 +903,7 @@ zlabel('Shear Flow (N/m)')
 grid on
 end     % Load Cases
 
-%% Check Centriod/Inertia Error
-CX=0.528864; CY=0.014876;
-IXX=1.2*10^-5; IYY=0.000549; IXY=-3*10^-6;
-Cx_Error=(CX-Cx)/CX*100;
-Cy_Error=(CY-Cy)/CY*100;
-IXX_Error=(IXX-Ixx)/IXX*100;
-IYY_Error=(IYY-Iyy)/IYY*100;
-IXY_Error=(IXY-Ixy)/IXY*100;
-disp('Error for Cx, Cy, Ixx, Iyy, Ixy are following %: ')
-disp([Cx_Error,Cy_Error,IXX_Error,IYY_Error,IXY_Error])
 %% Buckling Analysis
 
-%% Save SigmaZZ
 
-save('Sigma_ZZ.mat','SigmaZ')
 
