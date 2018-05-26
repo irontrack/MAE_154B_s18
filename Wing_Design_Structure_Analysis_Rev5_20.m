@@ -62,7 +62,7 @@ Botel=struct('posX',nx,'posY',nybot,...
 
 % Calculate Aera and Centroid of Each Element, Plot Results
 figure()
-set(gca,'FontSize',14)
+set(gca,'FontSize',18)
 hold on
 XiAiairf=0;
 YiAiairf=0;
@@ -473,84 +473,84 @@ end     % End of for loop for load cases
 color=['r','g','b','k','c','m'];
 
 figure()
-set(gca,'FontSize',14)
+set(gca,'FontSize',18)
 hold on
 for LC=1:6
 plot(z,Load.Wx(LC,:),color(LC),'Linewidth',2)
 end
 legend('PHAA @Sea','PosGust @Sea','PLAA @Sea',...
        'NLAA @Sea','NegGust @Sea','NHAA @Sea')
-title('Plot of Wx in different load cases')
+%title('Plot of Wx in different load cases')
 xlabel('Length (m)')
 ylabel('Wx (N)')
 grid on
 hold off
 
 figure()
-set(gca,'FontSize',14)
+set(gca,'FontSize',18)
 hold on
 for LC=1:6
 plot(z,Load.Wy(LC,:),color(LC),'Linewidth',2)
 end
 legend('PHAA @Sea','PosGust @Sea','PLAA @Sea',...
        'NLAA @Sea','NegGust @Sea','NHAA @Sea')
-title('Plot of Wy in different load cases')
+%title('Plot of Wy in different load cases')
 xlabel('Length (m)')
 ylabel('Wy (N)')
 grid on
 hold off
 
 figure()
-set(gca,'FontSize',14)
+set(gca,'FontSize',18)
 hold on
 for LC=1:6
 plot(z,Load.VWx(LC,:),color(LC),'Linewidth',2)
 end
 legend('PHAA @Sea','PosGust @Sea','PLAA @Sea',...
        'NLAA @Sea','NegGust @Sea','NHAA @Sea')
-title('Plot of VWx in different load cases')
+%title('Plot of VWx in different load cases')
 xlabel('Length (m)')
 ylabel('VWx (N)')
 grid on
 hold off
 
 figure()
-set(gca,'FontSize',14)
+set(gca,'FontSize',18)
 hold on
 for LC=1:6
 plot(z,Load.VWy(LC,:),color(LC),'Linewidth',2)
 end
 legend('PHAA @Sea','PosGust @Sea','PLAA @Sea',...
        'NLAA @Sea','NegGust @Sea','NHAA @Sea')
-title('Plot of VWy in different load cases')
+%title('Plot of VWy in different load cases')
 xlabel('Length (m)')
 ylabel('VWy (N)')
 grid on
 hold off
 
 figure()
-set(gca,'FontSize',14)
+set(gca,'FontSize',18)
 hold on
 for LC=1:6
 plot(z,Load.MWx(LC,:),color(LC),'Linewidth',2)
 end
 legend('PHAA @Sea','PosGust @Sea','PLAA @Sea',...
        'NLAA @Sea','NegGust @Sea','NHAA @Sea')
-title('Plot of MWx in different load cases')
+%title('Plot of MWx in different load cases')
 xlabel('Length (m)')
 ylabel('MWx (N*m)')
 grid on
 hold off
 
 figure()
-set(gca,'FontSize',14)
+set(gca,'FontSize',18)
 hold on
 for LC=1:6
 plot(z,Load.MWy(LC,:),color(LC),'Linewidth',2)
 end
 legend('PHAA @Sea','PosGust @Sea','PLAA @Sea',...
        'NLAA @Sea','NegGust @Sea','NHAA @Sea')
-title('Plot of MWy in different load cases')
+%title('Plot of MWy in different load cases')
 xlabel('Length (m)')
 ylabel('MWy (N*m)')
 grid on
@@ -580,30 +580,30 @@ end
 end % For Load Cases
 
 figure()
-set(gca,'FontSize',14)
+set(gca,'FontSize',18)
 hold on
 for LC=1:6
 plot(z,Load.u(LC,:),color(LC),'Linewidth',2)
 end
 legend('PHAA @Sea','PosGust @Sea','PLAA @Sea',...
        'NLAA @Sea','NegGust @Sea','NHAA @Sea')
-title('Plot of Deflection in x-direction in different load cases')
+%title('Plot of Deflection in x-direction in different load cases')
 xlabel('Length (m)')
-ylabel('MWx (N*m)')
+ylabel('Deflection (m)')
 grid on
 hold off
 
 figure()
-set(gca,'FontSize',14)
+set(gca,'FontSize',18)
 hold on
 for LC=1:6
 plot(z,Load.v(LC,:),color(LC),'Linewidth',2)
 end
 legend('PHAA @Sea','PosGust @Sea','PLAA @Sea',...
        'NLAA @Sea','NegGust @Sea','NHAA @Sea')
-title('Plot of Deflection in y-direction in different load cases')
+%title('Plot of Deflection in y-direction in different load cases')
 xlabel('Length (m)')
-ylabel('MWy (N*m)')
+ylabel('Deflection (m)')
 grid on
 hold off
 %% Direct Stress
@@ -643,14 +643,14 @@ for zi=1:length(z)/10
 end
 
 figure()
-set(gca,'FontSize',14)
+set(gca,'FontSize',18)
 hold on
 surf(Topfoil,SZtop)
 surf(Botfoil,SZbot)
 view([-45, -45, 45])
 zlim([-0.15 0.15])
 colorbar
-title(['Plot of SigmaZ at ',Criticalpt(LC)])
+%title(['Plot of SigmaZ at ',Criticalpt(LC)])
 xlabel('x length (m)')
 ylabel('z length (m)')
 zlabel('y length (m)')
@@ -672,7 +672,7 @@ for LC=1:12
   for zi=1:length(z)
     for i=1:length(BInd)
         % Determine if point on top or bottom
-        if i<round(length(BInd)/2)
+        if i<=round(length(BInd)/2)
            tb=1;    % Top
         elseif i>round(length(BInd)/2) 
            tb=2;    % Bottom
@@ -683,7 +683,7 @@ for LC=1:12
             Dleft=sqrt((B.posX(i)-B.posX(i+1))^2+(B.posY(i)-B.posY(i+1))^2);
             Dright=sqrt((B.posX(i)-B.posX(length(BInd)))^2+(B.posY(i)-B.posY(length(BInd)))^2);
             Bval{LC,zi}(i)=skint*Dleft/6*(2+SigmaZ{LC,zi}(1,BInd(i+1))/SigmaZ{LC,zi}(1,BInd(i)))+...
-                           spart*Dright/6*(2+SigmaZ{LC,zi}(2,length(BInd))/SigmaZ{LC,zi}(1,length(BInd)))+...
+                           spart*Dright/6*(2+SigmaZ{LC,zi}(2,BInd(end))/SigmaZ{LC,zi}(1,BInd(1)))+...
                            SparCaps.Area(5);
         % Last Boom           
         elseif i==length(BInd)
@@ -693,7 +693,7 @@ for LC=1:12
                            spart*Dright/6*(2+SigmaZ{LC,zi}(1,1)/SigmaZ{LC,zi}(2,BInd(i)))+...
                            SparCaps.Area(6);
         % Boom on Stringers               
-        elseif any(i==StringerInd)
+        elseif any(BInd(i)==StringerInd)
             Dleft=sqrt((B.posX(i)-B.posX(i+1))^2+(B.posY(i)-B.posY(i+1))^2);
             Dright=sqrt((B.posX(i)-B.posX(i-1))^2+(B.posY(i)-B.posY(i-1))^2);
             Bval{LC,zi}(i)=skint*Dleft/6*(2+SigmaZ{LC,zi}(tb,BInd(i+1))/SigmaZ{LC,zi}(tb,BInd(i)))+...
@@ -714,10 +714,7 @@ for LC=1:12
                            spart*Spars.Length(1)/6*(2+SigmaZ{LC,zi}(abs(tb-3),BInd(i))/SigmaZ{LC,zi}(tb,BInd(i)))+...
                            2*SparCaps.Area(1);
         else
-            Dleft=sqrt((B.posX(i)-B.posX(i+1))^2+(B.posY(i)-B.posY(i+1))^2);
-            Dright=sqrt((B.posX(i)-B.posX(i-1))^2+(B.posY(i)-B.posY(i-1))^2);
-            Bval{LC,zi}(i)=skint*Dleft/6*(2+SigmaZ{LC,zi}(tb,BInd(i+1))/SigmaZ{LC,zi}(tb,BInd(i)))+...
-                       skint*Dright/6*(2+SigmaZ{LC,zi}(tb,BInd(i-1))/SigmaZ{LC,zi}(tb,BInd(i)));
+
         end % If Statment
         
     end     % Booms
@@ -728,12 +725,16 @@ end         % End loop for load cases
 
 % Plot boom locations
 figure()
-set(gca,'FontSize',14)
+set(gca,'FontSize',18)
 hold on
-plot(B.posX,B.posY,'or')
-plot(nx,nytop(1:80),'b',nx,nybot(1:80),'b')
-xlim([-0.05,1.4])
+plot(B.posX,B.posY,'or','Linewidth',2)
+plot(0.25*1.346,0,'*m','Markersize',10,'Linewidth',2)
+plot(nx,nytop(1:80),'b',nx,nybot(1:80),'b','Linewidth',2)
+legend('Boom Locations','Shear Center')
+xlim([-0.05,1.2])
 ylim([-0.3,0.3])
+xlabel('Length (m)')
+ylabel('Length (m)')
 grid on
 hold off
 
@@ -796,16 +797,16 @@ qC(3,2)=2*C2Area;
 for i=C1Ind(1):C1Ind(2)-1
   qC(1,1)=qC(1,1)+sqrt((B.posX(i+1)-B.posX(i))^2+(B.posY(i+1)-B.posY(i))^2)/skint;
 end     % First Cell
-qC(1,1)=1/(2*C1Area*G)*(qC(1,1)+(Spars.Length(1))/spart);
+qC(1,1)=1/(2*C1Area*G)*(qC(1,1)+(-Spars.Length(1))/spart);
 
 % Back Cell
 for ii=1:length(C2Ind)-1
   i=C2Ind(ii);
   qC(2,2)=qC(2,2)+sqrt((B.posX(i+1)-B.posX(i))^2+(B.posY(i+1)-B.posY(i))^2)/skint;         
 end     % 2nd Cell
-qC(2,2)=1/(2*C2Area*G)*(qC(2,2)+(Spars.Length(1))/spart+(Spars.Length(2))/spart);
+qC(2,2)=1/(2*C2Area*G)*(qC(2,2)+(Spars.Length(1))/spart+(-Spars.Length(2))/spart);
 
-qC(1,2)=-1/(2*C1Area*G)*(Spars.Length(1))/spart;
+qC(1,2)=-1/(2*C1Area*G)*(-Spars.Length(1))/spart;
 qC(2,1)=-1/(2*C2Area*G)*(Spars.Length(2))/spart;
 
 % Front Cell
@@ -836,14 +837,14 @@ for LC=1:12
           sqrt((B.posX(i+1)-B.posX(i))^2+(B.posY(i+1)-B.posY(i))^2)/skint;
     end     % 2nd Cell
     qB{LC,zi}(2)=-1/(2*C2Area*G)*...
-                 ((Load.VWy(LC,zi)*Ixy-Load.VWx(LC,zi)*Ixx)/denom*BX1+...
-                  (Load.VWx(LC,zi)*Ixy-Load.VWy(LC,zi)*Iyy)/denom*BY1);   
+                 ((Load.VWy(LC,zi)*Ixy-Load.VWx(LC,zi)*Ixx)/denom*BX2+...
+                  (Load.VWx(LC,zi)*Ixy-Load.VWy(LC,zi)*Iyy)/denom*BY2);   
   end   %Wingspan
 end     %Load Cases
 
 for LC=1:12 
   for zi=1:length(z)
-    qB{LC,zi}(3)=M0(LC)+Load.VWy(LC,zi)*(.25*1.346-Cx)-...
+    qB{LC,zi}(3)=M0(LC)-Load.VWy(LC,zi)*(.25*1.346-Cx)-...
                  (2*qb1(LC,zi)*C1Area+2*qb2(LC,zi)*C2Area);
   end   %Wingspan
 end     %Load Cases
@@ -852,11 +853,10 @@ end     %Load Cases
 ShearFlow12=cell(12,length(z));
 for LC=1:12 
   for zi=1:length(z)-1
-    ShearFlow12{LC,zi}=qB{LC,zi}(1:3)'\qC;
-    ShearFlow12{LC,length(z)}=0;
+    ShearFlow12{LC,zi}=qC\qB{LC,zi}';
   end   %Wingspan
+  ShearFlow12{LC,length(z)}=0;
 end     %Load Cases
-
 
 % Calculating Total Shear Flow
 ShearFlow=cell(12,length(z));
@@ -891,12 +891,12 @@ end
 
 for LC=1:6
 figure()
-set(gca,'FontSize',14)
+set(gca,'FontSize',18)
 for zz=1:length(z)/10
  SF(:,zz)=ShearFlow{LC,zz}(:);
 end
 plot3(SFZ,SFX,SF,'Linewidth',2)
-title(['Plot of Shear Flow at ',Criticalpt(LC)])
+%title(['Plot of Shear Flow at ',Criticalpt(LC)])
 xlabel('Z direction (m)')
 ylabel('Nodes')
 zlabel('Shear Flow (N/m)')
