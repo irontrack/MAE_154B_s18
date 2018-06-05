@@ -27,9 +27,7 @@ A_stringer = 7e-6; %[m^2]
 a = 2e-3;
 b = 5e-3;
 t = 1e-3;
-c = 1e-3;
-I = (b*(a + c)^3 - 2*(c^3)*(b - t) - 6*(a^2)*c*(b - t))/12;
-% I = (a*(b^3) - c*(b - 2*t)^3)/12;
+I = 
 z = linspace(0,5.6,560);
 
 finished = false;
