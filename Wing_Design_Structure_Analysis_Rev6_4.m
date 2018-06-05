@@ -723,12 +723,16 @@ for LC=1:12
   
 end         % End loop for load cases
 
+% Shear Center
+SCx=0.25*1.346;
+SCy=0;
+
 % Plot boom locations
 figure()
 set(gca,'FontSize',18)
 hold on
 plot(B.posX,B.posY,'or','Linewidth',2)
-plot(0.25*1.346,0,'*m','Markersize',10,'Linewidth',2)
+plot(SCx,SCy,'*m','Markersize',10,'Linewidth',2)
 plot(nx,nytop(1:80),'b',nx,nybot(1:80),'b','Linewidth',2)
 legend('Boom Locations','Shear Center')
 xlim([-0.05,1.2])
@@ -741,9 +745,21 @@ hold off
 %% Shear Flow
 G=28*10^9;  % Shear Modulus [Pa]
 denom=Ixx*Iyy-Ixy^2;
-% Front Cell
-qb1=zeros(12,length(z));
 C1Ind=find(BInd==SparIndex(1));
+C2Ind=[1:C1Ind(1) C1Ind(2):length(BInd)];
+
+% Boom Area
+BoomArea=zeros(1,length(BInd));
+for i=2:length(BInd)
+%     if i==round(length(BInd)/2) || i==round(length(BInd)/2)+1
+%       BoomArea(i)=abs(B.posX(i-1)-B.posX(i))*...
+%                   abs(B.posY(i-1)-B.posY(i))/4;
+%     else
+      BoomArea(i)=sum(cross([B.posX(i-1)-Cx; B.posY(i-1)-Cy;0],...
+                            [B.posX(i)-Cx; B.posY(i)-Cy;0]))/2;
+%     end
+end     % Cell
+
 C1Area=0;
 for i=1:SparIndex(1)-1
     L=Topel.posY(i)-Botel.posY(i);
@@ -751,20 +767,6 @@ for i=1:SparIndex(1)-1
     H=Topel.posX(i+1)-Topel.posX(i);
     C1Area=C1Area+(L+R)*H/2;
 end
-
-for LC=1:12 
-  for zi=1:length(z)
-    for i=C1Ind(1):C1Ind(2)
-        qb1(LC,zi)=qb1(LC,zi)+...
-                   (Load.VWy(LC,zi)*Ixy-Load.VWx(LC,zi)*Ixx)/denom*Bval{LC,zi}(i)*(B.posX(i)-Cx)+...
-                   (Load.VWx(LC,zi)*Ixy-Load.VWy(LC,zi)*Iyy)/denom*Bval{LC,zi}(i)*(B.posY(i)-Cy); 
-    end     % First Cell
-  end   %Wingspan
-end     %Load Cases
-
-% Back Cell
-qb2=zeros(12,length(z));
-C2Ind=[1:C1Ind(1) C1Ind(2):length(BInd)];
 C2Area=0;
 for i=SparIndex(1):SparIndex(2)-1
     L=Topel.posY(i)-Botel.posY(i);
@@ -773,18 +775,20 @@ for i=SparIndex(1):SparIndex(2)-1
     C2Area=C2Area+(L+R)*H/2;
 end
 
+% Basic Shear Flow Qb
+qb=cell(12,length(z));
 for LC=1:12 
   for zi=1:length(z)
-    for ii=1:length(C2Ind)
-        i=C2Ind(ii);
-        qb2(LC,zi)=qb2(LC,zi)+...
+    qb{LC,zi}=zeros(1,length(BInd)+1);
+    for i=2:length(BInd)
+      qb{LC,zi}(i)=qb{LC,zi}(i-1)+...
                    (Load.VWy(LC,zi)*Ixy-Load.VWx(LC,zi)*Ixx)/denom*Bval{LC,zi}(i)*(B.posX(i)-Cx)+...
-                   (Load.VWx(LC,zi)*Ixy-Load.VWy(LC,zi)*Iyy)/denom*Bval{LC,zi}(i)*(B.posY(i)-Cy);    
-    end     % 2nd Cell
+                   (Load.VWx(LC,zi)*Ixy-Load.VWy(LC,zi)*Iyy)/denom*Bval{LC,zi}(i)*(B.posY(i)-Cy); 
+    end     % Cell
   end   %Wingspan
 end     %Load Cases
 
-% Calculating Q1 Q2 and dtdz
+%% Calculating Q1 Q2 and dtdz
 qC=zeros(3,3);
 qB=cell(12,length(z));
 
@@ -842,10 +846,13 @@ for LC=1:12
   end   %Wingspan
 end     %Load Cases
 
+qbA=0;
 for LC=1:12 
   for zi=1:length(z)
-    qB{LC,zi}(3)=M0(LC)-Load.VWy(LC,zi)*(.25*1.346-Cx)-...
-                 (2*qb1(LC,zi)*C1Area+2*qb2(LC,zi)*C2Area);
+      for i=2:length(BInd)
+          qbA=qbA+qb{LC,zi}(i)*BoomArea(i);
+      end
+    qB{LC,zi}(3)=M0(LC)-Load.VWy(LC,zi)*(SCx-Cx)-qbA;
   end   %Wingspan
 end     %Load Cases
 
@@ -906,6 +913,7 @@ end     % Load Cases
 %% Buckling Analysis
 % Bending buckling 
 % Shear buckling
+rib_spacing
 
 %% CDR ---> FDR
 
