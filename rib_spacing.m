@@ -21,15 +21,16 @@ min_z = min(sigma_z);
 
 % using ALUMINUM 2024 properties
 E = 73.1e9;
-A_stringer = 7e-6; %[m^2]
+
 
 % assuming stringer is a cirular rod
-a = 2e-3;
-b = 5e-3;
-t = 1e-3;
-c = 1e-3;
-I = (b*(a + c)^3 - 2*(c^3)*(b - t) - 6*(a^2)*c*(b - t))/12;
-% I = (a*(b^3) - c*(b - 2*t)^3)/12;
+a = 5.7e-3;
+b = 6e-3;
+t = 1.5e-3;
+c = a - t;
+% I = (b*(a + c)^3 - 2*(c^3)*(b - t) - 6*(a^2)*c*(b - t))/12;
+I = (a*(b^3) - c*(b - 2*t)^3)/12;
+A_stringer = (2*a + (b - 2*t))*t; %[m^2]
 z = linspace(0,5.6,560);
 
 finished = false;

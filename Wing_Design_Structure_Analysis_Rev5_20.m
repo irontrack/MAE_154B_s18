@@ -234,9 +234,9 @@ Cysparcap=YiAisparcap/SparCapArea;
 %% Create Stringers Element
 % Stringers are z shape, with top and bot of length of L, height of H
 % Thickness are 1 mm
-L=0.002;
+L=0.0057;
 H=0.003;
-StringerArea1=H*0.001+2*L*0.001; % Area m^2
+StringerArea1=H*0.0015+2*L*0.0015; % Area m^2
 StringerGap=[1 SparIndex];
 numofStringer1=3;
 numofStringer2=4;
