@@ -239,11 +239,11 @@ H=0.003;
 StringerArea1=H*0.0015+2*L*0.0015; % Area m^2
 StringerGap=[1 SparIndex];
 numofStringer1=3;
-numofStringer2=4;
-Ind1=floor((StringerGap(2)-StringerGap(1))/numofStringer1);
-Ind2=floor((StringerGap(3)-StringerGap(2))/numofStringer2);
-StringerInd=[floor(Ind1/2):Ind1:StringerGap(2),...
-             StringerGap(2)+floor(Ind2/2):Ind2:StringerGap(3)];
+numofStringer2=8;
+Ind1x=floor((StringerGap(2)-StringerGap(1))/numofStringer1);
+Ind2x=floor((StringerGap(3)-StringerGap(2))/numofStringer2);
+StringerInd=[floor(Ind1x/2):Ind1x:StringerGap(2),...
+             StringerGap(2)+floor(Ind2x/2):Ind2x:StringerGap(3)];
 StringerInd=StringerInd(StringerInd~=SparIndex(1));
 
 TopStringers=struct('posX',nx(StringerInd),'posY',nytop(StringerInd),...
@@ -379,7 +379,8 @@ Weight=910*g;                   % N(Max allowed)
 
 % Set up
 z=linspace(0,Wingspan,Wingspan*100);
-Load=struct('Wy',ones(12,length(z)), 'TotWy',zeros(12,length(z)),...
+Load=struct('Lift',ones(12,length(z)), 'Drag',zeros(12,length(z)),...
+            'Wy',ones(12,length(z)), 'TotWy',zeros(12,length(z)),...
             'Wx',ones(12,length(z)), 'TotWx',zeros(12,length(z)), ...
             'VWy',zeros(12,length(z)), 'MWy',zeros(12,length(z)),...
             'VWx',zeros(12,length(z)), 'MWx',zeros(12,length(z)),...
@@ -412,7 +413,7 @@ L_rec = L/Wingspan.*Load.Wy(LC,:);  %Rectangular lift distribution
 L0 = 4*L/(pi*Wingspan);   %Elliptical lift dist. at centerline (x=0).
 L_ellp = L0.*sqrt(1-(z./Wingspan).^2); %Elliptical lift distribution
 LiftLoad=(L_rec+L_ellp)/2;    %Spanwise lift distribution (average of rec & ellp)
-
+Load.Lift(LC,:)=LiftLoad;
 
 % Calculate Drag Distribution 
 D = 0.5*rho_sea*WingArea*vel(LC)^2*Drag_coef(LC);
@@ -420,6 +421,7 @@ DragLoad = D/Wingspan.*Load.Wx(LC,:);      %Spanwise drag distribution
 End_ind=round(0.8*length(DragLoad));
 DragLoad(End_ind:end) = DragLoad(End_ind:end)*1.1; 
                                     %Add 10% step to 80% onward of span
+Load.Drag(LC,:)=DragLoad;
                         
 % Calculating Wy Wx
 Load.Wy(LC,:)=LiftLoad*cos(alpha(LC))+DragLoad*sin(alpha(LC));
@@ -472,6 +474,37 @@ end     % End of for loop for load cases
 % plot all Wx,Wy VWx,Vwy,MWx,MWy at Sea Level
 color=['r','g','b','k','c','m'];
 
+% Plot Lift Distribution
+figure()
+set(gca,'FontSize',18)
+hold on
+for LC=1:6
+plot(z,Load.Lift(LC,:),color(LC),'Linewidth',2)
+end
+legend('PHAA @Sea','PosGust @Sea','PLAA @Sea',...
+       'NLAA @Sea','NegGust @Sea','NHAA @Sea')
+%title('Plot of Lift Load in different load cases')
+xlabel('Length (m)')
+ylabel('Lift Load (N)')
+grid on
+hold off
+
+% Plot Drag Distribution
+figure()
+set(gca,'FontSize',18)
+hold on
+for LC=1:6
+plot(z,Load.Drag(LC,:),color(LC),'Linewidth',2)
+end
+legend('PHAA @Sea','PosGust @Sea','PLAA @Sea',...
+       'NLAA @Sea','NegGust @Sea','NHAA @Sea')
+%title('Plot of Drag Load in different load cases')
+xlabel('Length (m)')
+ylabel('Drag Load (N)')
+grid on
+hold off
+
+% Plot Wx
 figure()
 set(gca,'FontSize',18)
 hold on
@@ -486,6 +519,7 @@ ylabel('Wx (N)')
 grid on
 hold off
 
+% Plot Wy
 figure()
 set(gca,'FontSize',18)
 hold on
@@ -500,6 +534,7 @@ ylabel('Wy (N)')
 grid on
 hold off
 
+% Plot Shear x
 figure()
 set(gca,'FontSize',18)
 hold on
@@ -514,6 +549,7 @@ ylabel('VWx (N)')
 grid on
 hold off
 
+% Plot Shear y
 figure()
 set(gca,'FontSize',18)
 hold on
@@ -528,6 +564,7 @@ ylabel('VWy (N)')
 grid on
 hold off
 
+% Plot Moment x
 figure()
 set(gca,'FontSize',18)
 hold on
@@ -542,6 +579,7 @@ ylabel('MWx (N*m)')
 grid on
 hold off
 
+% Plot Moment y
 figure()
 set(gca,'FontSize',18)
 hold on
@@ -659,6 +697,9 @@ end     % Load Cases
 
 % Save SigmaZZ
 save('Sigma_ZZ.mat','SigmaZ')
+
+%% Plot SigmaZ at the root
+
 %% Shear Flow --- Creating Boom
 % Creating Boom
 Bval=cell(12,length(z));
@@ -681,16 +722,16 @@ for LC=1:12
         % First Boom
         if i==1
             Dleft=sqrt((B.posX(i)-B.posX(i+1))^2+(B.posY(i)-B.posY(i+1))^2);
-            Dright=sqrt((B.posX(i)-B.posX(length(BInd)))^2+(B.posY(i)-B.posY(length(BInd)))^2);
-            Bval{LC,zi}(i)=skint*Dleft/6*(2+SigmaZ{LC,zi}(1,BInd(i+1))/SigmaZ{LC,zi}(1,BInd(i)))+...
+            Dright=sqrt((B.posX(i)-B.posX(end))^2+(B.posY(i)-B.posY(end))^2);
+            Bval{LC,zi}(i)=skint*Dleft/6*(2+SigmaZ{LC,zi}(1,BInd(2))/SigmaZ{LC,zi}(1,BInd(1)))+...
                            spart*Dright/6*(2+SigmaZ{LC,zi}(2,BInd(end))/SigmaZ{LC,zi}(1,BInd(1)))+...
                            SparCaps.Area(5);
         % Last Boom           
         elseif i==length(BInd)
             Dleft=sqrt((B.posX(i)-B.posX(i-1))^2+(B.posY(i)-B.posY(i-1))^2);
             Dright=sqrt((B.posX(i)-B.posX(1))^2+(B.posY(i)-B.posY(1))^2);
-            Bval{LC,zi}(i)=skint*Dleft/6*(2+SigmaZ{LC,zi}(1,BInd(i-1))/SigmaZ{LC,zi}(1,BInd(i)))+...
-                           spart*Dright/6*(2+SigmaZ{LC,zi}(1,1)/SigmaZ{LC,zi}(2,BInd(i)))+...
+            Bval{LC,zi}(i)=skint*Dleft/6*(2+SigmaZ{LC,zi}(1,BInd(i-1))/SigmaZ{LC,zi}(2,BInd(i)))+...
+                           spart*Dright/6*(2+SigmaZ{LC,zi}(1,BInd(1))/SigmaZ{LC,zi}(2,BInd(i)))+...
                            SparCaps.Area(6);
         % Boom on Stringers               
         elseif any(BInd(i)==StringerInd)
@@ -711,7 +752,7 @@ for LC=1:12
             Dright=sqrt((B.posX(i)-B.posX(i-1))^2+(B.posY(i)-B.posY(i-1))^2);
             Bval{LC,zi}(i)=skint*Dleft/6*(2+SigmaZ{LC,zi}(tb,BInd(i+1))/SigmaZ{LC,zi}(tb,BInd(i)))+...
                            skint*Dright/6*(2+SigmaZ{LC,zi}(tb,BInd(i-1))/SigmaZ{LC,zi}(tb,BInd(i)))+...
-                           spart*Spars.Length(1)/6*(2+SigmaZ{LC,zi}(abs(tb-3),BInd(i))/SigmaZ{LC,zi}(tb,BInd(i)))+...
+                           spart*Spars.Length(1)/6*(2+SigmaZ{LC,zi}(3-tb,BInd(i))/SigmaZ{LC,zi}(tb,BInd(i)))+...
                            2*SparCaps.Area(1);
         else
 
@@ -745,20 +786,19 @@ hold off
 %% Shear Flow
 G=28*10^9;  % Shear Modulus [Pa]
 denom=Ixx*Iyy-Ixy^2;
+
 C1Ind=find(BInd==SparIndex(1));
 C2Ind=[1:C1Ind(1) C1Ind(2):length(BInd)];
 
 % Boom Area
-BoomArea=zeros(1,length(BInd));
+BoomArea=zeros(1,length(BInd)+1);
 for i=2:length(BInd)
-%     if i==round(length(BInd)/2) || i==round(length(BInd)/2)+1
-%       BoomArea(i)=abs(B.posX(i-1)-B.posX(i))*...
-%                   abs(B.posY(i-1)-B.posY(i))/4;
-%     else
-      BoomArea(i)=sum(cross([B.posX(i-1)-Cx; B.posY(i-1)-Cy;0],...
-                            [B.posX(i)-Cx; B.posY(i)-Cy;0]))/2;
-%     end
+  BoomArea(i)=sum(cross([B.posX(i-1)-Cx; B.posY(i-1)-Cy;0],...
+                        [B.posX(i)-Cx; B.posY(i)-Cy;0]))/2;
 end     % Cell
+BoomArea(1)=sum(cross([B.posX(end)-Cx; B.posY(end)-Cy;0],...
+                      [B.posX(1)-Cx; B.posY(1)-Cy;0]))/4;
+BoomArea(end)=BoomArea(1);
 
 C1Area=0;
 for i=1:SparIndex(1)-1
@@ -780,10 +820,10 @@ qb=cell(12,length(z));
 for LC=1:12 
   for zi=1:length(z)
     qb{LC,zi}=zeros(1,length(BInd)+1);
-    for i=2:length(BInd)
+    for i=2:length(BInd)+1
       qb{LC,zi}(i)=qb{LC,zi}(i-1)+...
-                   (Load.VWy(LC,zi)*Ixy-Load.VWx(LC,zi)*Ixx)/denom*Bval{LC,zi}(i)*(B.posX(i)-Cx)+...
-                   (Load.VWx(LC,zi)*Ixy-Load.VWy(LC,zi)*Iyy)/denom*Bval{LC,zi}(i)*(B.posY(i)-Cy); 
+                   (Load.VWy(LC,zi)*Ixy-Load.VWx(LC,zi)*Ixx)/denom*Bval{LC,zi}(i-1)*(B.posX(i-1)-Cx)+...
+                   (Load.VWx(LC,zi)*Ixy-Load.VWy(LC,zi)*Iyy)/denom*Bval{LC,zi}(i-1)*(B.posY(i-1)-Cy); 
     end     % Cell
   end   %Wingspan
 end     %Load Cases
@@ -849,7 +889,7 @@ end     %Load Cases
 qbA=0;
 for LC=1:12 
   for zi=1:length(z)
-      for i=2:length(BInd)
+      for i=2:length(BInd)+1
           qbA=qbA+qb{LC,zi}(i)*BoomArea(i);
       end
     qB{LC,zi}(3)=M0(LC)-Load.VWy(LC,zi)*(SCx-Cx)-qbA;
@@ -910,6 +950,8 @@ zlabel('Shear Flow (N/m)')
 grid on
 end     % Load Cases
 
+%% Check Shear Flow
+
 %% Buckling Analysis
 % Bending buckling 
 % Shear buckling
@@ -932,20 +974,73 @@ rib_spacing
 
 % Aero elasticity --- Divergence
 
-
 %% Von Mises Stress
 YieldStress=324*10^6;       % [Pa]
+SigmaMaxCS=zeros(12,length(z));
+Indx=zeros(12,length(z));
+SigmaMaxCS1=zeros(12,length(z));
+Ind1x=zeros(12,length(z));
+SigmaMaxCS2=zeros(12,length(z));
+Ind2x=zeros(12,length(z));
+Indy=zeros(12,1);
+Indz=zeros(12,1);
+SigmaMaxLC=zeros(12,1);
+MaxSigmaInd=zeros(12,2);
 
-SigmaEq=sqrt(2*SigmaZ^2+6*Shear^2);
+for LC=1:12
+  for zi=1:length(z)
+      
+  % Max direct stress at each cross section    
+  [SigmaMaxCS1(LC,zi), Ind1x(LC,zi)]=max(SigmaZ{LC,zi}(1,:));
+  [SigmaMaxCS2(LC,zi), Ind2x(LC,zi)]=max(SigmaZ{LC,zi}(2,:));
+  
+  % Max direct stress in each load case
+  if max(SigmaMaxCS1(LC,:))>max(SigmaMaxCS2(LC,:))
+     [SigmaMaxLC(LC),Indz(LC)]=max(SigmaMaxCS1(LC,:));
+     Indx(LC,zi)=Ind1x(LC,Indz(LC));
+     Indy(LC)=1;
+  else
+     [SigmaMaxLC(LC),Indz(LC)]=max(SigmaMaxCS2(LC,:));
+     Indx(LC,zi)=Ind2x(LC,Indz(LC)); 
+     Indy(LC)=2;
+  end   % End of if statment
+  end   % End of z loop
+end     % End of Load cases
 
+% Find max SigmaZ in all load cases
+[MaxSigma,IndLC]=max(SigmaMaxLC);
+% Maxsigma = SigmaZ{IndLC,Indz(IndLC)}(2,Indx(IndLC,Indz(IndLC)))
+
+% Find Shear at Max sigma location
+IndSF=find(BInd==Indx(IndLC,Indz(IndLC)));
+if Indy==1
+    IndSF=min(IndSF);
+else
+    IndSF=max(IndSF);
+end
+ShearFlowMax=ShearFlow{IndLC,Indz(IndLC)}(IndSF);
+ShearMax=ShearFlowMax/skint;
+SigmaEq=sqrt(2*MaxSigma^2+6*ShearMax^2);
+
+FOS=YieldStress/SigmaEq;
+
+disp('Maxmium Von Mises Stress is:')
+disp(SigmaEq)
+disp('Factor of Safety is;')
+disp(FOS)
 %% Fatigue/Crack Growth Analysis
-% Use SigmaZ
-% Assume Crack length 1 mm around a rivit hole
-% Or find critical crack length 
+% Use MaxSigmaZ
+% Assume initial crack length is 1 mm around a rivit hole
+ai=0.002; % [m]
+% Find critical crack length 
+KIC=26; % [MPa*m^1/2]
+aCrit=(KIC/(MaxSigma/10^6))^2/pi;
 
-KC=26; % [MPa*m^1/2]
-C=10^-12;
-n=3;
+C=10^-12; % 9.82*10^-11
+n=3; %4, 3.25
+N=1/(C*((MaxSigma/10^5)*sqrt(pi))^3)*...
+  ((aCrit^(1-n/2)/(1-n/2))-(ai^(1-n/2)/(1-n/2)));
+
 %% Aeroelasticity 
 % Chp 28 in book
 % Divergence 
