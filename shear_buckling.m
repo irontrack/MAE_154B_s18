@@ -38,6 +38,8 @@ for i = 1:length(B)
 
     if abs(min_z) < sigma_cr
         fprintf('passed\n')
+        fos = sigma_cr/abs(min(min_z));
+        fprintf('fos: %4.2f\n',fos)
     else
         fprintf('not passed\n')
     end
