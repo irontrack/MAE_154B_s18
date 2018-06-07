@@ -238,8 +238,8 @@ L=0.0057;
 H=0.003;
 StringerArea1=H*0.0015+2*L*0.0015; % Area m^2
 StringerGap=[1 SparIndex];
-numofStringer1=3;
-numofStringer2=4;
+numofStringer1=4;
+numofStringer2=8;
 Ind1=floor((StringerGap(2)-StringerGap(1))/numofStringer1);
 Ind2=floor((StringerGap(3)-StringerGap(2))/numofStringer2);
 StringerInd=[floor(Ind1/2):Ind1:StringerGap(2),...
@@ -923,7 +923,9 @@ end     % Load Cases
 % Fatigue
 
 % Aero elasticity --- Divergence
-
+ save('Sigma_ZZ.mat','SigmaZ')
+ save('TopStringers.mat','TopStringers')
+ save('BotStringers.mat','BotStringers')
 
 %% Von Mises Stress
 YieldStress=324*10^6;       % [Pa]
