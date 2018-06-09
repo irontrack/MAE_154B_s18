@@ -31,16 +31,6 @@ nx=nx(nx<=0.8*1.346);
 
 writetable(table(x',nytop',zeros(length(x),1)),'NACA2412 Refined Top.txt');
 writetable(table(x',nybot',zeros(length(x),1)),'NACA2412 Refined Bot.txt');
-% Plot Airfoil
-% figure()
-% hold on
-% plot(scalefactor*nx,scalefactor*yc,'g')
-% plot(scalefactor*nx,scalefactor*nytop,'b',scalefactor*nx,scalefactor*nybot,'b')
-% xlim([-0.05,1.4])
-% ylim([-0.5,0.5])
-% xlabel('Length (m)')
-% ylabel('Length (m)')
-% grid on
 
 %% Create Elements
 
@@ -233,7 +223,7 @@ Cysparcap=YiAisparcap/SparCapArea;
 
 %% Create Stringers Element
 % Stringers are z shape, with top and bot of length of L, height of H
-% Thickness are 1 mm
+% Thickness are 1.5 mm
 L=0.0057;
 H=0.003;
 StringerArea1=H*0.0015+2*L*0.0015; % Area m^2
@@ -750,12 +740,6 @@ for LC=1:12
             Bval{LC,zi}(i)=skint*Dleft/6*(2+B.posY(i+1)/B.posY(i))+...
                            skint*Dright/6*(2+B.posY(i-1)/B.posY(i))+...
                            StringerArea1;
-        % Boom at nose
-%         elseif i==round(length(BInd)/2) 
-%             Dleft=sqrt((B.posX(i)-B.posX(i+1))^2+(B.posY(i)-B.posY(i+1))^2);
-%             Dright=sqrt((B.posX(i)-B.posX(i-1))^2+(B.posY(i)-B.posY(i-1))^2);
-%             Bval{LC,zi}(i)=skint*Dleft/6*(2+B.posY(i+1)/B.posY(i))+...
-%                            skint*Dright/6*(2+B.posY(i-1)/B.posY(i));
         % Boom at 1st Spar
         elseif BInd(i)==SparIndex(1)
             Dleft=sqrt((B.posX(i)-B.posX(i+1))^2+(B.posY(i)-B.posY(i+1))^2);
@@ -765,13 +749,9 @@ for LC=1:12
                            spart*Spars.Length(1)/6*(2+B.posY(20-i)/B.posY(i))+...
                            2*SparCaps.Area(1);
         else
-
         end % If Statment
-        
     end     % Booms
-    
-  end       % Wingspan
-  
+  end       % Wingspan  
 end         % End loop for load cases
 
 % Shear Center
@@ -963,28 +943,12 @@ end     % Load Cases
 
 %% Check Shear Flow
 % ShearFlow{1,1}/skint
+
 %% Buckling Analysis
 % Bending buckling 
-% Shear buckling
 rib_spacing
+% Shear buckling
 shear_buckling
-%% CDR ---> FDR
-
-% Aero dynamic loading, copy from slides (Lec 1D) summary of torque
-% balance, force balance, pics, disscusion of where load comes from
-
-% Add lift/drag distribution
-
-% Check Shear flow using shear stress
-% Double check TA code for checks
-% Basic shear flow sum to zero, single cell
-
-% Von Mises for FOS
-
-% Fatigue
-
-% Aero elasticity --- Divergence
-
 %% Von Mises Stress
 YieldStress=324*10^6;       % [Pa]
 SigmaMaxCS=zeros(12,length(z));
@@ -1041,7 +1005,7 @@ disp('Factor of Safety is;')
 disp(FOS)
 %% Fatigue/Crack Growth Analysis
 % Use MaxSigmaZ
-% Assume initial crack length is 1 mm around a rivit hole
+% Assume initial crack length is 2 mm around a rivit hole
 ai=0.002; % [m]
 % Find critical crack length 
 KIC=26; % [MPa*m^1/2]
@@ -1053,9 +1017,3 @@ N=1/(C*((MaxSigma/10^5)*sqrt(pi))^3)*...
   ((aCrit^(1-n/2)/(1-n/2))-(ai^(1-n/2)/(1-n/2)));
 
 %% Aeroelasticity 
-% Chp 28 in book
-% Divergence 
-% Control Reversal
-
-
-
