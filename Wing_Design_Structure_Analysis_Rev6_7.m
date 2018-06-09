@@ -689,7 +689,7 @@ surf(Botfoil,SZbot)
 view([-45, -45, 45])
 zlim([-0.15 0.15])
 colorbar
-title(['Plot of SigmaZ at ',Criticalpt(LC)])
+% title(['Plot of SigmaZ at ',Criticalpt(LC)])
 xlabel('x length (nodes)')
 ylabel('z length (cm)')
 zlabel('y length (m)')
@@ -700,14 +700,22 @@ end     % Load Cases
 save('Sigma_ZZ.mat','SigmaZ')
 
 %% Plot SigmaZ at the root
-
+figure()
+set(gca,'FontSize',18)
+hold on
+plot(nx,SigmaZ{1,1}(1,:),'Linewidth',2)
+plot(nx,SigmaZ{1,1}(2,:),'r','Linewidth',2)
+legend('Top Skin','Bottom Skin','Location','SouthEast')
+xlabel('Cord Length (m)')
+ylabel('Direct Stress (Pa)')
+grid on
 %% Shear Flow --- Creating Boom
 % Creating Boom
 Bval=cell(12,length(z));
-BIndex=sort([1, SparIndex, StringerInd]);
-BInd=[fliplr(BIndex) BIndex(2:end)];
-B(:).posX=[nx(fliplr(BIndex)) nx(BIndex(2:end))];
-B(:).posY=[Topel.posY(fliplr(BIndex)) Botel.posY(BIndex(2:end))];
+BIndex=sort([SparIndex, StringerInd]);
+BInd=[fliplr(BIndex) BIndex];
+B(:).posX=[nx(fliplr(BIndex)) nx(BIndex)];
+B(:).posY=[Topel.posY(fliplr(BIndex)) Botel.posY(BIndex)];
 % Creating Boom around the airfoil, from top right, around to bottom right.
 
 for LC=1:12 
@@ -722,41 +730,41 @@ for LC=1:12
         
         % First Boom
         if i==1
-            Dleft=sqrt((B.posX(1)-B.posX(2))^2+(B.posY(1)-B.posY(2))^2);
-            Dright=sqrt((B.posX(1)-B.posX(end))^2+(B.posY(1)-B.posY(end))^2);
-            Bval{LC,zi}(i)=skint*Dleft/6*(2+SigmaZ{LC,zi}(1,BInd(2))/SigmaZ{LC,zi}(1,BInd(1)))+...
-                           spart*Dright/6*(2+SigmaZ{LC,zi}(2,BInd(end))/SigmaZ{LC,zi}(1,BInd(1)))+...
+            Dleft=sqrt((B.posX(i)-B.posX(i+1))^2+(B.posY(i)-B.posY(i+1))^2);
+            Dright=sqrt((B.posX(i)-B.posX(end))^2+(B.posY(i)-B.posY(end))^2);
+            Bval{LC,zi}(i)=skint*Dleft/6*(2+B.posY(i+1)/B.posY(i))+...
+                           spart*Dright/6*(2+B.posY(end))/B.posY(1)+...
                            SparCaps.Area(5);
         % Last Boom           
         elseif i==length(BInd)
-            Dleft=sqrt((B.posX(end)-B.posX(1))^2+(B.posY(end)-B.posY(1))^2);
-            Dright=sqrt((B.posX(i)-B.posX(end-1))^2+(B.posY(end)-B.posY(end-1))^2);
-            Bval{LC,zi}(i)=spart*Dleft/6*(2+SigmaZ{LC,zi}(1,BInd(1))/SigmaZ{LC,zi}(2,BInd(end)))+...
-                           skint*Dright/6*(2+SigmaZ{LC,zi}(1,BInd(end-1))/SigmaZ{LC,zi}(2,BInd(end)))+...
+            Dleft=sqrt((B.posX(i)-B.posX(i-1))^2+(B.posY(i)-B.posY(i-1))^2);
+            Dright=sqrt((B.posX(i)-B.posX(1))^2+(B.posY(i)-B.posY(1))^2);
+            Bval{LC,zi}(i)=skint*Dleft/6*(2+B.posY(i-1)/B.posY(i))+...
+                           spart*Dright/6*(2+B.posY(1)/B.posY(i))+...
                            SparCaps.Area(6);
         % Boom on Stringers               
         elseif any(BInd(i)==StringerInd)
             Dleft=sqrt((B.posX(i)-B.posX(i+1))^2+(B.posY(i)-B.posY(i+1))^2);
             Dright=sqrt((B.posX(i)-B.posX(i-1))^2+(B.posY(i)-B.posY(i-1))^2);
-            Bval{LC,zi}(i)=skint*Dleft/6*(2+SigmaZ{LC,zi}(tb,BInd(i+1))/SigmaZ{LC,zi}(tb,BInd(i)))+...
-                           skint*Dright/6*(2+SigmaZ{LC,zi}(tb,BInd(i-1))/SigmaZ{LC,zi}(tb,BInd(i)))+...
+            Bval{LC,zi}(i)=skint*Dleft/6*(2+B.posY(i+1)/B.posY(i))+...
+                           skint*Dright/6*(2+B.posY(i-1)/B.posY(i))+...
                            StringerArea1;
         % Boom at nose
-        elseif i==round(length(BInd)/2) 
-            Dleft=sqrt((B.posX(i)-B.posX(i+1))^2+(B.posY(i)-B.posY(i+1))^2);
-            Dright=sqrt((B.posX(i)-B.posX(i-1))^2+(B.posY(i)-B.posY(i-1))^2);
-            Bval{LC,zi}(i)=skint*Dleft/6*(2+SigmaZ{LC,zi}(2,BInd(i+1))/SigmaZ{LC,zi}(1,BInd(i)))+...
-                           skint*Dright/6*(2+SigmaZ{LC,zi}(1,BInd(i-1))/SigmaZ{LC,zi}(1,BInd(i)));
+%         elseif i==round(length(BInd)/2) 
+%             Dleft=sqrt((B.posX(i)-B.posX(i+1))^2+(B.posY(i)-B.posY(i+1))^2);
+%             Dright=sqrt((B.posX(i)-B.posX(i-1))^2+(B.posY(i)-B.posY(i-1))^2);
+%             Bval{LC,zi}(i)=skint*Dleft/6*(2+B.posY(i+1)/B.posY(i))+...
+%                            skint*Dright/6*(2+B.posY(i-1)/B.posY(i));
         % Boom at 1st Spar
         elseif BInd(i)==SparIndex(1)
             Dleft=sqrt((B.posX(i)-B.posX(i+1))^2+(B.posY(i)-B.posY(i+1))^2);
             Dright=sqrt((B.posX(i)-B.posX(i-1))^2+(B.posY(i)-B.posY(i-1))^2);
-            Bval{LC,zi}(i)=skint*Dleft/6*(2+SigmaZ{LC,zi}(tb,BInd(i+1))/SigmaZ{LC,zi}(tb,BInd(i)))+...
-                           skint*Dright/6*(2+SigmaZ{LC,zi}(tb,BInd(i-1))/SigmaZ{LC,zi}(tb,BInd(i)))+...
-                           spart*Spars.Length(1)/6*(2+SigmaZ{LC,zi}(3-tb,BInd(i))/SigmaZ{LC,zi}(tb,BInd(i)))+...
+            Bval{LC,zi}(i)=skint*Dleft/6*(2+B.posY(i+1)/B.posY(i))+...
+                           skint*Dright/6*(2+B.posY(i-1)/B.posY(i))+...
+                           spart*Spars.Length(1)/6*(2+B.posY(20-i)/B.posY(i))+...
                            2*SparCaps.Area(1);
         else
-           
+
         end % If Statment
         
     end     % Booms
@@ -953,7 +961,7 @@ grid on
 end     % Load Cases
 
 %% Check Shear Flow
-
+% ShearFlow{1,1}/skint
 %% Buckling Analysis
 % Bending buckling 
 % Shear buckling
