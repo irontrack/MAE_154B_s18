@@ -268,7 +268,8 @@ for i=1:length(StringerInd)
 end
 
 StringerArea=numel(StringerInd)*2*StringerArea1;
-
+save('TopStringers.mat','TopStringers')
+save('BotStringers.mat','BotStringers')
 %% Calculate Total Centroid
 Cx=(XiAiairf+XiAiSpar+XiAisparcap+XiAiStringer)/...
    (AirfoilArea+SparArea+SparCapArea+StringerArea);
@@ -966,7 +967,7 @@ end     % Load Cases
 % Bending buckling 
 % Shear buckling
 rib_spacing
-
+shear_buckling
 %% CDR ---> FDR
 
 % Aero dynamic loading, copy from slides (Lec 1D) summary of torque
