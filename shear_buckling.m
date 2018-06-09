@@ -30,16 +30,19 @@ min_z = min(sigma_z);
 
 v = 0.33;
 E = 73.1e9;
-k = 11;
+k = 9;
 t = 0.001;
 for i = 1:length(B)
     b = B(i);
-    sigma_cr = (k*(pi^2)*E*t^2)/(12*(1 - v^2)*b^2)
+    sigma_cr = (k*(pi^2)*E*t^2)/(12*(1 - v^2)*b^2);
 
-    if abs(min_z) < sigma_cr
-        fprintf('passed\n')
+    if abs(min(min_z))< sigma_cr
+        fprintf('panel %2i: ', i)
+        fprintf('b = %5.3f m ',B(i))
+        fprintf('passed  ')
+        fprintf('sigma_cr: %5.3e',sigma_cr)
         fos = sigma_cr/abs(min(min_z));
-        fprintf('fos: %4.2f\n',fos)
+        fprintf('  fos: %4.2f\n',fos)
     else
         fprintf('not passed\n')
     end
