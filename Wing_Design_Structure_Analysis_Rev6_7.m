@@ -5,19 +5,19 @@ clc;
 
 %% Define Airfoil
 x=linspace(0,1.346,100);
-c=1.346;
-t=.12;
-m=2/100;
-p=4/10;
-pc=p*c;
+chord=1.346;
+maxchordthickness=.12;
+maxcamber=2/100;
+Locmaxcamber=4/10;
+pc=Locmaxcamber*chord;
 yc=zeros(1,length(x));
-yt=5*t*(.2969*sqrt(x/c)-.126*(x/c)-.3516*(x/c).^2+.2843*(x/c).^3-0.1015*(x/c).^4);
+yt=5*maxchordthickness*(.2969*sqrt(x/chord)-.126*(x/chord)-.3516*(x/chord).^2+.2843*(x/chord).^3-0.1015*(x/chord).^4);
 
 for i=1:length(x)
     if (x(i)<pc)
-        yc(i)=m/p^2*(2*p*(x(i)/c)-(x(i)/c)^2);
+        yc(i)=maxcamber/Locmaxcamber^2*(2*Locmaxcamber*(x(i)/chord)-(x(i)/chord)^2);
     else
-        yc(i)=m/(1-p)^2*((1-2*p)+2*p*(x(i)/c)-(x(i)/c)^2);
+        yc(i)=maxcamber/(1-Locmaxcamber)^2*((1-2*Locmaxcamber)+2*Locmaxcamber*(x(i)/chord)-(x(i)/chord)^2);
     end
 end
 
@@ -36,7 +36,7 @@ writetable(table(x',nybot',zeros(length(x),1)),'NACA2412 Refined Bot.txt');
 
 % Create Airfoil Elements
 % All Nodes for airfoil are in the inner side of the elements
-skint=0.002;  % Skin thickness
+skint=0.0018;  % Skin thickness
 Topel=struct('posX',nx,'posY',nytop,...
              'Length',zeros(length(nx),1),'Area',zeros(length(nx),1),...
              'cx',zeros(length(nx),1),'cy',zeros(length(nx),1),...
@@ -102,7 +102,7 @@ Cxaf=XiAiairf/AirfoilArea;
 Cyaf=YiAiairf/AirfoilArea;
 
 %% Create Spars/Spar-Caps Elements
-spart=0.004; % Spar thickness
+spart=0.006; % Spar thickness
 sparcapt=0.002; % Spar cap size
 
 % Spar Location
@@ -160,27 +160,27 @@ SparCaps=struct('posX',transpose(Spars.xcoord(:,1:4)),...
                 'Ixy',zeros(6,1),...
                 'xcoord',zeros(6,7),...
                 'ycoord',zeros(6,7));  
-b=2*sparcapt;
+sparcapbase=2.5*sparcapt;
 XiAisparcap=0;
 YiAisparcap=0;
 for i=1:6
     % Area of spar caps
-    SparCaps.Area(i)=(2*b-sparcapt)*sparcapt;
+    SparCaps.Area(i)=(2*sparcapbase-sparcapt)*sparcapt;
     % centroids of spar caps
     if i==3||i==4
         SparCaps.cx(i)=SparCaps.posX(i)+(1/SparCaps.Area(i))*...
-                       (sparcapt/2*(b^2+b*sparcapt-sparcapt^2));
+                       (sparcapt/2*(sparcapbase^2+sparcapbase*sparcapt-sparcapt^2));
     else
         SparCaps.cx(i)=SparCaps.posX(i)-(1/SparCaps.Area(i))*...
-                        (sparcapt/2*(b^2+b*sparcapt-sparcapt^2));
+                        (sparcapt/2*(sparcapbase^2+sparcapbase*sparcapt-sparcapt^2));
     end
     
     if i==1||i==4||i==5
         SparCaps.cy(i)=SparCaps.posY(i)+(1/SparCaps.Area(i))*...
-                       (sparcapt/2*(b^2+b*sparcapt-sparcapt^2));
+                       (sparcapt/2*(sparcapbase^2+sparcapbase*sparcapt-sparcapt^2));
     else
         SparCaps.cy(i)=SparCaps.posY(i)-(1/SparCaps.Area(i))*...
-                        (sparcapt/2*(b^2+b*sparcapt-sparcapt^2));
+                        (sparcapt/2*(sparcapbase^2+sparcapbase*sparcapt-sparcapt^2));
     end
                 
     XiAisparcap=XiAisparcap+SparCaps.cx(i)*SparCaps.Area(i);
@@ -188,13 +188,13 @@ for i=1:6
     
     % Draw Spar Caps
     if i==3||i==4
-        SparCaps.xcoord(i,:)=[SparCaps.posX(i) SparCaps.posX(i)+b...
-                          SparCaps.posX(i)+b SparCaps.posX(i)+sparcapt...
+        SparCaps.xcoord(i,:)=[SparCaps.posX(i) SparCaps.posX(i)+sparcapbase...
+                          SparCaps.posX(i)+sparcapbase SparCaps.posX(i)+sparcapt...
                           SparCaps.posX(i)+sparcapt SparCaps.posX(i)...
                           SparCaps.posX(i)];
     else
-        SparCaps.xcoord(i,:)=[SparCaps.posX(i) SparCaps.posX(i)-b...
-                          SparCaps.posX(i)-b SparCaps.posX(i)-sparcapt...
+        SparCaps.xcoord(i,:)=[SparCaps.posX(i) SparCaps.posX(i)-sparcapbase...
+                          SparCaps.posX(i)-sparcapbase SparCaps.posX(i)-sparcapt...
                           SparCaps.posX(i)-sparcapt SparCaps.posX(i)...
                           SparCaps.posX(i)];
     end
@@ -203,13 +203,13 @@ for i=1:6
         SparCaps.ycoord(i,:)=[SparCaps.posY(i), SparCaps.posY(i),...
                           SparCaps.posY(i)+sparcapt,...
                           SparCaps.posY(i)+sparcapt,...
-                          SparCaps.posY(i)+b, SparCaps.posY(i)+b,...
+                          SparCaps.posY(i)+sparcapbase, SparCaps.posY(i)+sparcapbase,...
                           SparCaps.posY(i)];
     else
         SparCaps.ycoord(i,:)=[SparCaps.posY(i) SparCaps.posY(i)...
                           SparCaps.posY(i)-sparcapt...
                           SparCaps.posY(i)-sparcapt...
-                          SparCaps.posY(i)-b SparCaps.posY(i)-b...
+                          SparCaps.posY(i)-sparcapbase SparCaps.posY(i)-sparcapbase...
                           SparCaps.posY(i)];
     end
     
@@ -224,27 +224,28 @@ Cysparcap=YiAisparcap/SparCapArea;
 %% Create Stringers Element
 % Stringers are z shape, with top and bot of length of L, height of H
 % Thickness are 1.5 mm
-L=0.0057;
-H=0.003;
-StringerArea1=H*0.0015+2*L*0.0015; % Area m^2
+L_stringer=0.0055;
+H_stringer=0.006;
+t_stringer=0.0015;
+StringerArea1=t_stringer*(H_stringer+2*(L_stringer-t_stringer)); % Area m^2
 StringerGap=[1 SparIndex];
 numofStringer1=3;
-numofStringer2=8;
+numofStringer2=6;
 Ind1x=floor((StringerGap(2)-StringerGap(1))/numofStringer1);
 Ind2x=floor((StringerGap(3)-StringerGap(2))/numofStringer2);
-StringerInd=[floor(Ind1x/2):Ind1x:StringerGap(2),...
-             StringerGap(2)+floor(Ind2x/2):Ind2x:StringerGap(3)];
+StringerInd=[round(Ind1x/2):Ind1x:StringerGap(2),...
+             StringerGap(2)+round(Ind2x/2):Ind2x:StringerGap(3)];
 StringerInd=StringerInd(StringerInd~=SparIndex(1));
 StringerInd=StringerInd(StringerInd~=SparIndex(2));
 
 TopStringers=struct('posX',nx(StringerInd),'posY',nytop(StringerInd),...
-        'cx',nx(StringerInd),'cy',nytop(StringerInd)-H/2,...
+        'cx',nx(StringerInd),'cy',nytop(StringerInd)-H_stringer/2,...
         'Ixx',zeros(length(StringerInd),1),...
         'Iyy',zeros(length(StringerInd),1),...
         'Ixy',zeros(length(StringerInd),1));
              
 BotStringers=struct('posX',nx(StringerInd),'posY',nybot(StringerInd),...
-        'cx',nx(StringerInd),'cy',nybot(StringerInd)+H/2,...
+        'cx',nx(StringerInd),'cy',nybot(StringerInd)+H_stringer/2,...
         'Ixx',zeros(length(StringerInd),1),'Iyy',zeros(length(StringerInd),1),...
         'Ixy',zeros(length(StringerInd),1));
 
@@ -312,11 +313,11 @@ end
 
 % SparCaps Elements
 for i=1:6
-    SparCaps.Ixx(i)=(sparcapt/3)*(b*sparcapt^2+b^3-sparcapt^3)-...
+    SparCaps.Ixx(i)=(sparcapt/3)*(sparcapbase*sparcapt^2+sparcapbase^3-sparcapt^3)-...
                      SparCaps.Area(i)*(Cy-SparCaps.posY(i))^2;
-    SparCaps.Iyy(i)=(sparcapt/3)*(b*sparcapt^2+b^3-sparcapt^3)-...
+    SparCaps.Iyy(i)=(sparcapt/3)*(sparcapbase*sparcapt^2+sparcapbase^3-sparcapt^3)-...
                      SparCaps.Area(i)*(Cx-SparCaps.posX(i))^2;
-    SparCaps.Ixy(i)=(sparcapt^2/4)*(2*b^2-sparcapt^2)-SparCaps.Area(i)*...
+    SparCaps.Ixy(i)=(sparcapt^2/4)*(2*sparcapbase^2-sparcapt^2)-SparCaps.Area(i)*...
                     (Cy-SparCaps.posY(i))*...
                     (Cx-SparCaps.posX(i));
 end
@@ -349,19 +350,19 @@ disp('The Area Moment of Inertia are')
 disp([Ixx Iyy Ixy])
 
 %% Check Centriod/Inertia Error
-CX=0.528864; CY=0.014876;
-IXX=1.2*10^-5; IYY=0.000549; IXY=-3*10^-6;
-Cx_Error=(CX-Cx)/CX*100;
-Cy_Error=(CY-Cy)/CY*100;
-IXX_Error=(IXX-Ixx)/IXX*100;
-IYY_Error=(IYY-Iyy)/IYY*100;
-IXY_Error=(IXY-Ixy)/IXY*100;
-disp('Error for Cx, Cy, Ixx, Iyy, Ixy are following %: ')
-disp([Cx_Error,Cy_Error,IXX_Error,IYY_Error,IXY_Error])
+% CX=0.528864; CY=0.014876;
+% IXX=1.2*10^-5; IYY=0.000549; IXY=-3*10^-6;
+% Cx_Error=(CX-Cx)/CX*100;
+% Cy_Error=(CY-Cy)/CY*100;
+% IXX_Error=(IXX-Ixx)/IXX*100;
+% IYY_Error=(IYY-Iyy)/IYY*100;
+% IXY_Error=(IXY-Ixy)/IXY*100;
+% disp('Error for Cx, Cy, Ixx, Iyy, Ixy are following %: ')
+% disp([Cx_Error,Cy_Error,IXX_Error,IYY_Error,IXY_Error])
 
 %% Stress Analysis
 % Constants
-E=70*10^9;                      % Pa
+E=73.1*10^9;                    % Pa
 g=9.8;                          % kg*m/s^2
 rho_sea=1.225;                  % kg/m^3
 rho_12k=rho_sea*.693;           % kg/m^3
@@ -400,9 +401,9 @@ M0=zeros(1,12);
 for LC=1:12   % Going through all load cases
 
 % Calculate Lift Distribution
-L = n(LC)*Weight*.5;   %Total lift on a wing (for a half span)
-L_rec = L/Wingspan.*Load.Wy(LC,:);  %Rectangular lift distribution
-L0 = 4*L/(pi*Wingspan);   %Elliptical lift dist. at centerline (x=0).
+Lift = n(LC)*Weight*.5;   %Total lift on a wing (for a half span)
+L_rec = Lift/Wingspan.*Load.Wy(LC,:);  %Rectangular lift distribution
+L0 = 4*Lift/(pi*Wingspan);   %Elliptical lift dist. at centerline (x=0).
 L_ellp = L0.*sqrt(1-(z./Wingspan).^2); %Elliptical lift distribution
 LiftLoad=(L_rec+L_ellp)/2;    %Spanwise lift distribution (average of rec & ellp)
 Load.Lift(LC,:)=LiftLoad;
@@ -794,17 +795,17 @@ end     % Cell
 
 C1Area=0;
 for i=1:SparIndex(1)-1
-    L=Topel.posY(i)-Botel.posY(i);
-    R=Topel.posY(i+1)-Botel.posY(i+1);
-    H=Topel.posX(i+1)-Topel.posX(i);
-    C1Area=C1Area+(L+R)*H/2;
+    Left=Topel.posY(i)-Botel.posY(i);
+    Right=Topel.posY(i+1)-Botel.posY(i+1);
+    Height=Topel.posX(i+1)-Topel.posX(i);
+    C1Area=C1Area+(Left+Right)*Height/2;
 end
 C2Area=0;
 for i=SparIndex(1):SparIndex(2)-1
-    L=Topel.posY(i)-Botel.posY(i);
-    R=Topel.posY(i+1)-Botel.posY(i+1);
-    H=Topel.posX(i+1)-Topel.posX(i);
-    C2Area=C2Area+(L+R)*H/2;
+    Left=Topel.posY(i)-Botel.posY(i);
+    Right=Topel.posY(i+1)-Botel.posY(i+1);
+    Height=Topel.posX(i+1)-Topel.posX(i);
+    C2Area=C2Area+(Left+Right)*Height/2;
 end
 
 % Basic Shear Flow Qb
@@ -942,13 +943,31 @@ grid on
 end     % Load Cases
 
 %% Check Shear Flow
-% ShearFlow{1,1}/skint
+% Find Shear force at root
+Vx=0; Vy=0; theta=0;
+for i=1:length(BInd)
+    if i==length(BInd)
+       Vy=Vy+ShearFlow{1,1}(i)*abs(B.posY(1)-B.posY(i));
+    else
+    theta=atan2(abs(B.posY(i+1)-B.posY(i)),B.posX(i+1)-B.posX(i));
+    Vx=Vx+cos(theta)*ShearFlow{1,1}(i)*abs(B.posX(i+1)-B.posX(i));
+    Vy=Vy+sin(theta)*ShearFlow{1,1}(i)*abs(B.posY(i+1)-B.posY(i));
+    end
+end
 
+disp('Shear Force in x-direction at the root in PHAA is (N):')
+disp(Load.VWx(1,1))
+disp('Calculated Error with Shear Flow is (%);')
+disp(abs(Load.VWx(1,1)-Vx)/abs(Load.VWx(1,1))*100)
+disp('Shear Force in y-direction at the root in PHAA is (N):')
+disp(Load.VWy(1,1))
+disp('Calculated Error with Shear Flow is (%);')
+disp(abs(Load.VWy(1,1)-Vy)/abs(Load.VWy(1,1))*100)
 %% Buckling Analysis
 % Bending buckling 
-rib_spacing
+rib_spacing_Rev6_9
 % Shear buckling
-shear_buckling
+shear_buckling_Rev6_9
 %% Von Mises Stress
 YieldStress=324*10^6;       % [Pa]
 SigmaMaxCS=zeros(12,length(z));
