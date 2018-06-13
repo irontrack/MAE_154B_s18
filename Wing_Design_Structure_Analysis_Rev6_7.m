@@ -785,11 +785,11 @@ C2Ind=[1:C1Ind(1) C1Ind(2):length(BInd)];
 BoomArea=zeros(1,length(BInd));
 for i=1:length(BInd)
   if i==length(BInd)
-  BoomArea(i)=sum(cross([B.posX(end)-SCx; B.posY(end)-SCy;0],...
-                  [B.posX(end)-SCx; (B.posY(1)-B.posY(end))/2-SCy;0]))/2;    
+  BoomArea(i)=sum(cross([B.posX(end)-Cx; B.posY(end)-Cy;0],...
+                  [B.posX(end)-Cx; (B.posY(1)-(B.posY(1)-B.posY(end))/2)-Cy;0]))/2;        
   else
-  BoomArea(i)=sum(cross([B.posX(i)-SCx; B.posY(i)-SCy;0],...
-                        [B.posX(i+1)-SCx; B.posY(i+1)-SCy;0]))/2;
+  BoomArea(i)=sum(cross([B.posX(i)-Cx; B.posY(i)-Cy;0],...
+                        [B.posX(i+1)-Cx; B.posY(i+1)-Cy;0]))/2;
   end
 end     % Cell
 
@@ -815,8 +815,8 @@ for LC=1:12
     qb{LC,zi}=zeros(1,length(BInd)+1);
     for i=2:length(BInd)+1
       qb{LC,zi}(i)=qb{LC,zi}(i-1)+...
-                   (Load.VWy(LC,zi)*Ixy-Load.VWx(LC,zi)*Ixx)/denom*Bval{LC,zi}(i-1)*(B.posX(i-1)-SCx)+...
-                   (Load.VWx(LC,zi)*Ixy-Load.VWy(LC,zi)*Iyy)/denom*Bval{LC,zi}(i-1)*(B.posY(i-1)-SCy); 
+                   (Load.VWy(LC,zi)*Ixy-Load.VWx(LC,zi)*Ixx)/denom*Bval{LC,zi}(i-1)*(B.posX(i-1)-Cx)+...
+                   (Load.VWx(LC,zi)*Ixy-Load.VWy(LC,zi)*Iyy)/denom*Bval{LC,zi}(i-1)*(B.posY(i-1)-Cy); 
     end     % Cell
   end   %Wingspan
 end     %Load Cases
@@ -949,28 +949,33 @@ grid on
 end     % Load Cases
 
 %% Check Shear Flow
+% Check qb
+disp(qb{2,1})
+
 % Find Shear force at root
-Vx=0; Vy=0; theta=0;
+Sx=0; Sy=0;
 for i=1:length(BInd)
     if i==length(BInd)
-       Vy=Vy+ShearFlow{3,1}(i)*abs(B.posY(1)-B.posY(i));
-    else
-    theta=atan2(abs(B.posY(i+1)-B.posY(i)),B.posX(i+1)-B.posX(i));
-    Vx=Vx+cos(theta)*ShearFlow{3,1}(i)*abs(B.posX(i+1)-B.posX(i));
-    Vy=Vy+sin(theta)*ShearFlow{3,1}(i)*abs(B.posY(i+1)-B.posY(i));
+       Sy=Sy+ShearFlow{2,1}(i)*Spars.Length(2)*spart;
+    elseif i<length(BInd)/2
+    Sx=Sx+ShearFlow{2,1}(i)*(B.posX(i+1)-B.posX(i))*skint;
+    Sy=Sy+ShearFlow{2,1}(i)*(B.posY(i+1)-B.posY(i))*skint;
+    elseif i>length(BInd)/2
+    Sx=Sx+ShearFlow{2,1}(i)*(B.posX(i+1)-B.posX(i))*skint;
+    Sy=Sy+ShearFlow{2,1}(i)*(B.posY(i+1)-B.posY(i))*skint;
     end
 end
 
 disp('Shear Force in x-direction at the root in PLAA is (N):')
-disp(Load.VWx(3,1))
-Vx
+disp(Load.VWx(2,1))
+disp(Sx)
 disp('Calculated Error with Shear Flow is (%);')
-disp(abs(Load.VWx(3,1)-Vx)/abs(Load.VWx(3,1))*100)
+disp(abs(Load.VWx(2,1)-Sx)/abs(Load.VWx(2,1))*100)
 disp('Shear Force in y-direction at the root in PLAA is (N):')
-disp(Load.VWy(3,1))
-Vy
+disp(Load.VWy(2,1))
+disp(Sy)
 disp('Calculated Error with Shear Flow is (%);')
-disp(abs(Load.VWy(3,1)-Vy)/abs(Load.VWy(3,1))*100)
+disp(abs(Load.VWy(2,1)-Sy)/abs(Load.VWy(2,1))*100)
 %% Buckling Analysis
 % Bending buckling 
 rib_spacing_Rev6_9
