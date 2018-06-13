@@ -743,11 +743,12 @@ for LC=1:12
                            StringerArea1;
         % Boom at 1st Spar
         elseif BInd(i)==SparIndex(1)
+            count=sum(find(BInd==SparIndex(1)));
             Dleft=sqrt((B.posX(i)-B.posX(i+1))^2+(B.posY(i)-B.posY(i+1))^2);
             Dright=sqrt((B.posX(i)-B.posX(i-1))^2+(B.posY(i)-B.posY(i-1))^2);
             Bval{LC,zi}(i)=skint*Dleft/6*(2+B.posY(i+1)/B.posY(i))+...
                            skint*Dright/6*(2+B.posY(i-1)/B.posY(i))+...
-                           spart*Spars.Length(1)/6*(2+B.posY(20-i)/B.posY(i))+...
+                           spart*Spars.Length(1)/6*(2+B.posY(count-i)/B.posY(i))+...
                            2*SparCaps.Area(1);
         else
         end % If Statment
@@ -786,26 +787,22 @@ BoomArea=zeros(1,length(BInd));
 for i=1:length(BInd)
   if i==length(BInd)
   BoomArea(i)=sum(cross([B.posX(end)-Cx; B.posY(end)-Cy;0],...
-                  [B.posX(end)-Cx; (B.posY(1)-(B.posY(1)-B.posY(end))/2)-Cy;0]))/2;        
+                  [B.posX(end)-Cx; (B.posY(1)-(B.posY(1)-B.posY(end))/2)-Cy;0]))/2;    
   else
   BoomArea(i)=sum(cross([B.posX(i)-Cx; B.posY(i)-Cy;0],...
                         [B.posX(i+1)-Cx; B.posY(i+1)-Cy;0]))/2;
   end
 end     % Cell
 
-C1Area=0;
-for i=BIndex(1):SparIndex(1)-1
-    Left=Topel.posY(i)-Botel.posY(i);
-    Right=Topel.posY(i+1)-Botel.posY(i+1);
-    Height=Topel.posX(i+1)-Topel.posX(i);
-    C1Area=C1Area+(Left+Right)*Height/2;
+AR1=0;
+for i=C1Ind(1):C1Ind(2)-1
+    AR1=AR1+(B.posX(i+1)*B.posY(i)-B.posY(i+1)*B.posX(i));
 end
-C2Area=0;
-for i=SparIndex(1):SparIndex(2)-1
-    Left=Topel.posY(i)-Botel.posY(i);
-    Right=Topel.posY(i+1)-Botel.posY(i+1);
-    Height=Topel.posX(i+1)-Topel.posX(i);
-    C2Area=C2Area+(Left+Right)*Height/2;
+
+AR2=0;
+for ii=1:length(C2Ind)-1
+    i=C2Ind(ii);
+    AR2=AR2+(B.posX(i+1)*B.posY(i)-B.posY(i+1)*B.posX(i));
 end
 
 % Basic Shear Flow Qb
@@ -827,15 +824,15 @@ qB=cell(12,length(z));
 
 qC(1,3)=-1;
 qC(2,3)=-1;
-qC(3,1)=2*C1Area;
-qC(3,2)=2*C2Area;
+qC(3,1)=AR1;
+qC(3,2)=AR2;
 
 % Front Cell
 for i=C1Ind(1):C1Ind(2)-1  
   qC(1,1)=qC(1,1)+sqrt((B.posX(i+1)-B.posX(i))^2+(B.posY(i+1)-B.posY(i))^2)/skint;
 end     % First Cell
-qC(1,1)=1/(2*C1Area*G)*(qC(1,1)+(-Spars.Length(1))/spart);
-qC(1,2)=-1/(2*C1Area*G)*(-Spars.Length(1))/spart;
+qC(1,1)=1/(2*AR1*G)*(qC(1,1)+(-Spars.Length(1))/spart);
+qC(1,2)=-1/(2*AR1*G)*(-Spars.Length(1))/spart;
 
 % Back Cell
 for ii=1:length(C2Ind)-1
@@ -845,8 +842,8 @@ for ii=1:length(C2Ind)-1
   qC(2,2)=qC(2,2)+sqrt((B.posX(i+1)-B.posX(i))^2+(B.posY(i+1)-B.posY(i))^2)/skint;
   end
 end     % 2nd Cell
-qC(2,2)=1/(2*C2Area*G)*(qC(2,2)+Spars.Length(1)/spart+(-Spars.Length(2))/spart);
-qC(2,1)=-1/(2*C2Area*G)*(Spars.Length(1))/spart;
+qC(2,2)=1/(2*AR2*G)*(qC(2,2)+Spars.Length(1)/spart+(-Spars.Length(2))/spart);
+qC(2,1)=-1/(2*AR2*G)*(Spars.Length(1))/spart;
 
 % Front Cell
 BX1=0;      BY1=0;      
@@ -858,7 +855,7 @@ for LC=1:12
       BY1=BY1+Bval{LC,zi}(i)*B.posY(i)*...
           sqrt((B.posX(i+1)-B.posX(i))^2+(B.posY(i+1)-B.posY(i))^2)/skint;
     end     % First Cell
-    qB{LC,zi}(1)=-1/(2*C1Area*G)*...
+    qB{LC,zi}(1)=-1/(2*AR1*G)*...
                  ((Load.VWy(LC,zi)*Ixy-Load.VWx(LC,zi)*Ixx)/denom*BX1+...
                   (Load.VWx(LC,zi)*Ixy-Load.VWy(LC,zi)*Iyy)/denom*BY1);   
   end   %Wingspan
@@ -878,7 +875,7 @@ for LC=1:12
           sqrt((B.posX(i+1)-B.posX(i))^2+(B.posY(i+1)-B.posY(i))^2)/skint;
       end
     end     % 2nd Cell
-    qB{LC,zi}(2)=-1/(2*C2Area*G)*...
+    qB{LC,zi}(2)=-1/(2*AR2*G)*...
                  ((Load.VWy(LC,zi)*Ixy-Load.VWx(LC,zi)*Ixx)/denom*BX2+...
                   (Load.VWx(LC,zi)*Ixy-Load.VWy(LC,zi)*Iyy)/denom*BY2);   
   end   %Wingspan
@@ -949,7 +946,7 @@ grid on
 end     % Load Cases
 
 %% Check Shear Flow
-LC=3;
+LC=6;
 % Check qb
 disp(qb{LC,1})
 
