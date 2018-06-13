@@ -350,15 +350,15 @@ disp('The Area Moment of Inertia are')
 disp([Ixx Iyy Ixy])
 
 %% Check Centriod/Inertia Error
-% CX=0.528864; CY=0.014876;
-% IXX=1.2*10^-5; IYY=0.000549; IXY=-3*10^-6;
-% Cx_Error=(CX-Cx)/CX*100;
-% Cy_Error=(CY-Cy)/CY*100;
-% IXX_Error=(IXX-Ixx)/IXX*100;
-% IYY_Error=(IYY-Iyy)/IYY*100;
-% IXY_Error=(IXY-Ixy)/IXY*100;
-% disp('Error for Cx, Cy, Ixx, Iyy, Ixy are following %: ')
-% disp([Cx_Error,Cy_Error,IXX_Error,IYY_Error,IXY_Error])
+CX=0.522241; CY=0.014307;
+IXX=1.2*10^-5; IYY=0.00059; IXY=-3*10^-6;
+Cx_Error=(CX-Cx)/CX*100;
+Cy_Error=(CY-Cy)/CY*100;
+IXX_Error=(IXX-Ixx)/IXX*100;
+IYY_Error=(IYY-Iyy)/IYY*100;
+IXY_Error=(IXY-Ixy)/IXY*100;
+disp('Error for Cx, Cy, Ixx, Iyy, Ixy are following %: ')
+disp([Cx_Error,Cy_Error,IXX_Error,IYY_Error,IXY_Error])
 
 %% Stress Analysis
 % Constants
@@ -725,7 +725,7 @@ for LC=1:12
             Dleft=sqrt((B.posX(i)-B.posX(i+1))^2+(B.posY(i)-B.posY(i+1))^2);
             Dright=sqrt((B.posX(i)-B.posX(end))^2+(B.posY(i)-B.posY(end))^2);
             Bval{LC,zi}(i)=skint*Dleft/6*(2+B.posY(i+1)/B.posY(i))+...
-                           spart*Dright/6*(2+B.posY(end))/B.posY(1)+...
+                           spart*Dright/6*(2+B.posY(end)/B.posY(i))+...
                            SparCaps.Area(5);
         % Last Boom           
         elseif i==length(BInd)
@@ -785,16 +785,16 @@ C2Ind=[1:C1Ind(1) C1Ind(2):length(BInd)];
 BoomArea=zeros(1,length(BInd));
 for i=1:length(BInd)
   if i==length(BInd)
-  BoomArea(i)=sum(cross([B.posX(end)-Cx; B.posY(end)-Cy;0],...
-                  [B.posX(end)-Cx; (B.posY(1)-B.posY(end))/2-Cy;0]))/2;    
+  BoomArea(i)=sum(cross([B.posX(end)-SCx; B.posY(end)-SCy;0],...
+                  [B.posX(end)-SCx; (B.posY(1)-B.posY(end))/2-SCy;0]))/2;    
   else
-  BoomArea(i)=sum(cross([B.posX(i)-Cx; B.posY(i)-Cy;0],...
-                        [B.posX(i+1)-Cx; B.posY(i+1)-Cy;0]))/2;
+  BoomArea(i)=sum(cross([B.posX(i)-SCx; B.posY(i)-SCy;0],...
+                        [B.posX(i+1)-SCx; B.posY(i+1)-SCy;0]))/2;
   end
 end     % Cell
 
 C1Area=0;
-for i=1:SparIndex(1)-1
+for i=BIndex(1):SparIndex(1)-1
     Left=Topel.posY(i)-Botel.posY(i);
     Right=Topel.posY(i+1)-Botel.posY(i+1);
     Height=Topel.posX(i+1)-Topel.posX(i);
@@ -815,8 +815,8 @@ for LC=1:12
     qb{LC,zi}=zeros(1,length(BInd)+1);
     for i=2:length(BInd)+1
       qb{LC,zi}(i)=qb{LC,zi}(i-1)+...
-                   (Load.VWy(LC,zi)*Ixy-Load.VWx(LC,zi)*Ixx)/denom*Bval{LC,zi}(i-1)*(B.posX(i-1)-Cx)+...
-                   (Load.VWx(LC,zi)*Ixy-Load.VWy(LC,zi)*Iyy)/denom*Bval{LC,zi}(i-1)*(B.posY(i-1)-Cy); 
+                   (Load.VWy(LC,zi)*Ixy-Load.VWx(LC,zi)*Ixx)/denom*Bval{LC,zi}(i-1)*(B.posX(i-1)-SCx)+...
+                   (Load.VWx(LC,zi)*Ixy-Load.VWy(LC,zi)*Iyy)/denom*Bval{LC,zi}(i-1)*(B.posY(i-1)-SCy); 
     end     % Cell
   end   %Wingspan
 end     %Load Cases
@@ -840,9 +840,12 @@ qC(1,2)=-1/(2*C1Area*G)*(-Spars.Length(1))/spart;
 % Back Cell
 for ii=1:length(C2Ind)-1
   i=C2Ind(ii);
-  qC(2,2)=qC(2,2)+sqrt((B.posX(i+1)-B.posX(i))^2+(B.posY(i+1)-B.posY(i))^2)/skint;         
+  if C2Ind(ii+1)-C2Ind(ii)~=1
+  else
+  qC(2,2)=qC(2,2)+sqrt((B.posX(i+1)-B.posX(i))^2+(B.posY(i+1)-B.posY(i))^2)/skint;
+  end
 end     % 2nd Cell
-qC(2,2)=1/(2*C2Area*G)*(qC(2,2)+(Spars.Length(1))/spart+(-Spars.Length(2))/spart);
+qC(2,2)=1/(2*C2Area*G)*(qC(2,2)+Spars.Length(1)/spart+(-Spars.Length(2))/spart);
 qC(2,1)=-1/(2*C2Area*G)*(Spars.Length(1))/spart;
 
 % Front Cell
@@ -867,10 +870,13 @@ for LC=1:12
   for zi=1:length(z)
     for ii=1:length(C2Ind)-1
       i=C2Ind(ii);  
+      if C2Ind(ii+1)-C2Ind(ii)~=1
+      else
       BX2=BX2+Bval{LC,zi}(i)*B.posX(i)*...
           sqrt((B.posX(i+1)-B.posX(i))^2+(B.posY(i+1)-B.posY(i))^2)/skint;
       BY2=BY2+Bval{LC,zi}(i)*B.posY(i)*...
           sqrt((B.posX(i+1)-B.posX(i))^2+(B.posY(i+1)-B.posY(i))^2)/skint;
+      end
     end     % 2nd Cell
     qB{LC,zi}(2)=-1/(2*C2Area*G)*...
                  ((Load.VWy(LC,zi)*Ixy-Load.VWx(LC,zi)*Ixx)/denom*BX2+...
@@ -936,8 +942,8 @@ for zz=1:length(z)/10
 end
 plot3(SFZ,SFX,SF,'Linewidth',2)
 title(['Plot of Shear Flow at ',Criticalpt(LC)])
-xlabel('Z direction (m)')
-ylabel('Nodes')
+xlabel('Z direction (m/10)')
+ylabel('Boom Nodes')
 zlabel('Shear Flow (N/m)')
 grid on
 end     % Load Cases
@@ -947,22 +953,24 @@ end     % Load Cases
 Vx=0; Vy=0; theta=0;
 for i=1:length(BInd)
     if i==length(BInd)
-       Vy=Vy+ShearFlow{1,1}(i)*abs(B.posY(1)-B.posY(i));
+       Vy=Vy+ShearFlow{3,1}(i)*abs(B.posY(1)-B.posY(i));
     else
     theta=atan2(abs(B.posY(i+1)-B.posY(i)),B.posX(i+1)-B.posX(i));
-    Vx=Vx+cos(theta)*ShearFlow{1,1}(i)*abs(B.posX(i+1)-B.posX(i));
-    Vy=Vy+sin(theta)*ShearFlow{1,1}(i)*abs(B.posY(i+1)-B.posY(i));
+    Vx=Vx+cos(theta)*ShearFlow{3,1}(i)*abs(B.posX(i+1)-B.posX(i));
+    Vy=Vy+sin(theta)*ShearFlow{3,1}(i)*abs(B.posY(i+1)-B.posY(i));
     end
 end
 
-disp('Shear Force in x-direction at the root in PHAA is (N):')
-disp(Load.VWx(1,1))
+disp('Shear Force in x-direction at the root in PLAA is (N):')
+disp(Load.VWx(3,1))
+Vx
 disp('Calculated Error with Shear Flow is (%);')
-disp(abs(Load.VWx(1,1)-Vx)/abs(Load.VWx(1,1))*100)
-disp('Shear Force in y-direction at the root in PHAA is (N):')
-disp(Load.VWy(1,1))
+disp(abs(Load.VWx(3,1)-Vx)/abs(Load.VWx(3,1))*100)
+disp('Shear Force in y-direction at the root in PLAA is (N):')
+disp(Load.VWy(3,1))
+Vy
 disp('Calculated Error with Shear Flow is (%);')
-disp(abs(Load.VWy(1,1)-Vy)/abs(Load.VWy(1,1))*100)
+disp(abs(Load.VWy(3,1)-Vy)/abs(Load.VWy(3,1))*100)
 %% Buckling Analysis
 % Bending buckling 
 rib_spacing_Rev6_9
